@@ -1,0 +1,29 @@
+https://github.com/kubernetes/kops/issues/1132
+
+
+I have done this by following this .
+Step # 1 Get Nodes & Master Result for Group Names
+root@worker:~# kops get ig
+Using cluster from kubectl context: cluster.#######.local
+
+NAME ROLE MACHINETYPE MIN MAX SUBNETS
+master-us-east-1d Master m3.medium 1 1 us-east-1d
+nodes Node t2.medium 0 0 us-east-1d
+
+Step # 2 (Edit Master Count on S3 Bucket Set Min & Max Value to 0)
+root@worker:~# kops edit ig master-us-east-1d
+maxSize: 0
+minSize: 0
+
+Step # 3 (Set Nodes Min & Max to 0)
+root@worker:~# kops edit ig nodes
+maxSize: 0
+minSize: 0
+
+Step # 4 (Update the Cluster)
+root@worker:~# kops update cluster --yes
+
+Step # 5 (Roll your updates on cluster)
+root@worker:~# kops rolling-update cluster
+
+No need to go to AWS to stop all resource manually :)
