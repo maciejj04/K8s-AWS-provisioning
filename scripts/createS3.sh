@@ -2,14 +2,15 @@
 
 . ../bash_utils.sh
 
-checkArgs $1 $2
-id=$(pwgen --no-capitalize 7 1)
-echo "Generated random cluster identifier: $id"
+checkArgs 2 $1 $2
+
 #eu-west-2
-type=$1
+cluster_name=$1 #mj-k8s-$type-$region-$id
 region=$2
 
-set -x; aws s3api create-bucket --bucket mj-k8s-$type-$region-$id-state-store --region $region --create-bucket-configuration LocationConstraint=$region
+
+
+set -x; aws s3api create-bucket --bucket -state-store --region $region --create-bucket-configuration LocationConstraint=$region
 
 # Consider S3 versioning
 # aws s3api put-bucket-versioning --bucket mj-k8-state-store --versioning-configuration Status=Enabled
