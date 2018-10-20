@@ -31,6 +31,14 @@ cluster_name="mj-k8s-$type-$region-$cluster_id"
 
 echo "Provisioning $type cluster in $region..."
 source ./prepare_local_env_vars.sh $cluster_name
+source ./configure_aws_cli.sh
 echo "Creating cluster named: $NAME with state backup in: $KOPS_STATE_STORE"
 
 #./create_cluster_configuration.sh
+
+echo "Building the cluster."
+#kops update cluster ${cluster_name} --yes
+
+if [ $? -eq 0 ]; then
+  echo "Done?"
+fi
