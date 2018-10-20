@@ -1,5 +1,7 @@
 #!/bin/bash
 
+echo "[WARNING] Note that this is not HA!"
+
 type="1mc-1mc"
 region="eu-west-2"
 domain="mj-developement.com"
@@ -25,20 +27,18 @@ cluster_name="mj-k8s-$type-$region-$cluster_id"
 
 
 # ############################### Run cluster prerequisities ##################################
-#./createS3.sh
+source ./configure_aws_cli.sh
+source ./createS3.sh $cluster_name $region
 
 # #####################################################################################
 
+
 echo "Provisioning $type cluster in $region..."
 source ./prepare_local_env_vars.sh $cluster_name
-source ./configure_aws_cli.sh
-echo "Creating cluster named: $NAME with state backup in: $KOPS_STATE_STORE"
 
-#./create_cluster_configuration.sh
-
-echo "Building the cluster."
-#kops update cluster ${cluster_name} --yes
+echo "Creating cluster configuration for name: $NAME with state backup in: $KOPS_STATE_STORE"
+./create_cluster_configuration.sh -z=eu-west-2a -c=1 -s=t2.micro -S=t2.micro -C=1 -N=$cluster_name --state-store=$KOPS_STATE_STORE
 
 if [ $? -eq 0 ]; then
-  echo "Done?"
+  echo "Ok"
 fi

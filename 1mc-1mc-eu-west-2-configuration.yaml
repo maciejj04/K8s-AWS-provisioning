@@ -1,0 +1,185 @@
+
+//
+//   WARNING: Do not use a '--full' cluster specification to define a Kubernetes installation.
+//   You may experience unexpected behavior and other bugs.  Use only the required elements
+//   and any modifications that you require.
+//
+//   Use the following command to retrieve only the required elements:
+//   $ kops get cluster -o yaml
+//
+
+apiVersion: kops/v1alpha2
+kind: Cluster
+metadata:
+  creationTimestamp: null
+  name: mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+spec:
+  api:
+    dns: {}
+  authorization:
+    alwaysAllow: {}
+  channel: stable
+  cloudLabels:
+    Email: maciejj04@gmail.com
+    Owner: Jozefczyk_Maciej
+  cloudProvider: aws
+  clusterDNSDomain: cluster.local
+  configBase: s3://mj-k8s-1mc-1mc-eu-west-2-chai2pi-state-store/mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+  configStore: s3://mj-k8s-1mc-1mc-eu-west-2-chai2pi-state-store/mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+  dnsZone: mj-developement.com
+  docker:
+    bridge: ""
+    ipMasq: false
+    ipTables: false
+    logDriver: json-file
+    logLevel: warn
+    logOpt:
+    - max-size=10m
+    - max-file=5
+    storage: overlay,aufs
+    version: 1.13.1
+  etcdClusters:
+  - etcdMembers:
+    - instanceGroup: master-eu-west-2a
+      name: a
+    name: main
+    version: 2.2.1
+  - etcdMembers:
+    - instanceGroup: master-eu-west-2a
+      name: a
+    name: events
+    version: 2.2.1
+  iam:
+    allowContainerRegistry: true
+    legacy: false
+  keyStore: s3://mj-k8s-1mc-1mc-eu-west-2-chai2pi-state-store/mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com/pki
+  kubeAPIServer:
+    address: 127.0.0.1
+    admissionControl:
+    - Initializers
+    - NamespaceLifecycle
+    - LimitRanger
+    - ServiceAccount
+    - PersistentVolumeLabel
+    - DefaultStorageClass
+    - DefaultTolerationSeconds
+    - NodeRestriction
+    - Priority
+    - ResourceQuota
+    allowPrivileged: true
+    anonymousAuth: false
+    apiServerCount: 1
+    authorizationMode: AlwaysAllow
+    cloudProvider: aws
+    etcdServers:
+    - http://127.0.0.1:4001
+    etcdServersOverrides:
+    - /events#http://127.0.0.1:4002
+    image: gcr.io/google_containers/kube-apiserver:v1.8.15
+    insecurePort: 8080
+    kubeletPreferredAddressTypes:
+    - InternalIP
+    - Hostname
+    - ExternalIP
+    logLevel: 2
+    requestheaderAllowedNames:
+    - aggregator
+    requestheaderExtraHeaderPrefixes:
+    - X-Remote-Extra-
+    requestheaderGroupHeaders:
+    - X-Remote-Group
+    requestheaderUsernameHeaders:
+    - X-Remote-User
+    securePort: 443
+    serviceClusterIPRange: 100.64.0.0/13
+    storageBackend: etcd2
+  kubeControllerManager:
+    allocateNodeCIDRs: true
+    attachDetachReconcileSyncPeriod: 1m0s
+    cloudProvider: aws
+    clusterCIDR: 100.96.0.0/11
+    clusterName: mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+    configureCloudRoutes: true
+    image: gcr.io/google_containers/kube-controller-manager:v1.8.15
+    leaderElection:
+      leaderElect: true
+    logLevel: 2
+    useServiceAccountCredentials: true
+  kubeDNS:
+    domain: cluster.local
+    replicas: 2
+    serverIP: 100.64.0.10
+  kubeProxy:
+    clusterCIDR: 100.96.0.0/11
+    cpuRequest: 100m
+    featureGates: null
+    hostnameOverride: '@aws'
+    image: gcr.io/google_containers/kube-proxy:v1.8.15
+    logLevel: 2
+  kubeScheduler:
+    image: gcr.io/google_containers/kube-scheduler:v1.8.15
+    leaderElection:
+      leaderElect: true
+    logLevel: 2
+  kubelet:
+    allowPrivileged: true
+    cgroupRoot: /
+    cloudProvider: aws
+    clusterDNS: 100.64.0.10
+    clusterDomain: cluster.local
+    enableDebuggingHandlers: true
+    evictionHard: memory.available<100Mi,nodefs.available<10%,nodefs.inodesFree<5%,imagefs.available<10%,imagefs.inodesFree<5%
+    featureGates:
+      ExperimentalCriticalPodAnnotation: "true"
+    hostnameOverride: '@aws'
+    kubeconfigPath: /var/lib/kubelet/kubeconfig
+    logLevel: 2
+    networkPluginMTU: 9001
+    networkPluginName: kubenet
+    nonMasqueradeCIDR: 100.64.0.0/10
+    podInfraContainerImage: gcr.io/google_containers/pause-amd64:3.0
+    podManifestPath: /etc/kubernetes/manifests
+    requireKubeconfig: true
+  kubernetesApiAccess:
+  - 0.0.0.0/0
+  kubernetesVersion: 1.8.15
+  masterInternalName: api.internal.mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+  masterKubelet:
+    allowPrivileged: true
+    cgroupRoot: /
+    cloudProvider: aws
+    clusterDNS: 100.64.0.10
+    clusterDomain: cluster.local
+    enableDebuggingHandlers: true
+    evictionHard: memory.available<100Mi,nodefs.available<10%,nodefs.inodesFree<5%,imagefs.available<10%,imagefs.inodesFree<5%
+    featureGates:
+      ExperimentalCriticalPodAnnotation: "true"
+    hostnameOverride: '@aws'
+    kubeconfigPath: /var/lib/kubelet/kubeconfig
+    logLevel: 2
+    networkPluginMTU: 9001
+    networkPluginName: kubenet
+    nonMasqueradeCIDR: 100.64.0.0/10
+    podInfraContainerImage: gcr.io/google_containers/pause-amd64:3.0
+    podManifestPath: /etc/kubernetes/manifests
+    registerSchedulable: false
+    requireKubeconfig: true
+  masterPublicName: api.mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com
+  networkCIDR: 172.20.0.0/16
+  networking:
+    kubenet: {}
+  nonMasqueradeCIDR: 100.64.0.0/10
+  secretStore: s3://mj-k8s-1mc-1mc-eu-west-2-chai2pi-state-store/mj-k8s-1mc-1mc-eu-west-2-chai2pi.mj-developement.com/secrets
+  serviceClusterIPRange: 100.64.0.0/13
+  sshAccess:
+  - 0.0.0.0/0
+  subnets:
+  - cidr: 172.20.32.0/19
+    name: eu-west-2a
+    type: Public
+    zone: eu-west-2a
+  topology:
+    dns:
+      type: Public
+    masters: public
+    nodes: public
