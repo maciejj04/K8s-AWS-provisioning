@@ -1,0 +1,47 @@
+---
+- hosts: localhost
+  tasks:
+    - name: Ensure cluster size exists
+      fail:
+        msg: "cluster_size variable do not exists!"
+      when: cluster_size is not defined
+
+    - name: Load common variables
+      include_vars:
+        file: vars/commons.yaml
+
+    - name: Load cluster size specific vars
+      include_vars:
+        file: vars/size/{{ cluster_size }}.yaml
+
+    - name: Check mandatory variables
+      fail:
+        msg: "{{ item }} was not defined!"
+      when: vars[item] is undefined
+      loop:
+#        - k8s_public_adress
+#        - hosts_all
+        - worker_nodes_info
+
+    - name: Provision CA
+      shell: ./generate-ca.sh
+
+#    - name: Generate admin client certificate
+#      shell: ./generate-admin-client-certificate.sh
+#
+#    - name: Generate kubelet client certificates for each node
+#      shell: ./generate-kubelet-client-certificates.sh -n="{{ item.nr }}" -i="{{ item.internal_ip }}" -e="{{ item.external_ip }}"
+#      with_items: "{{ worker_nodes_info }}"
+
+#    - name: Generate kube-controller-manager cert and ey
+#      shell: ./generate-kube-controller-manager-cert-and-key.sh
+#
+#    - name: Generate scheduler client certificate
+#      shell: ./scheduler-client-certificate.sh
+#
+#    - name: Generate api-server certificate
+#      shell: ./generate-api-server-certificate.sh --k8s-public-adress="{{ k8s_public_adress }}" --hostnames="{{ hosts_all }}"
+
+
+
+# TODO: Add task to archive secrets for cluster.
