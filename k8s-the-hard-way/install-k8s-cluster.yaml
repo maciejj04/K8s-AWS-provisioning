@@ -1,0 +1,67 @@
+---
+- hosts: localhost
+  tasks:
+    - name:
+      set_fact:
+        worker_ips: "{{ groups['worker-nodes'] }}"
+
+    - name:
+      set_fact:
+        master_ips: "{{ groups['master-nodes'] }}"
+
+#=== TMP
+    - name:
+      set_fact:
+        k8s_public_host: "{{ master_ips[0] }}"
+      when: k8s_public_host is not defined
+#=== TMP
+
+    - name: Check mandatory variables
+      fail:
+        msg: "{{ item }} was not defined!"
+      when: vars[item] is undefined
+      loop:
+        - k8s_public_host
+        - cluster_size
+
+    - name: Load common variables
+      include_vars:
+        file: vars/commons.yaml
+
+    - name: Load cluster size specific vars
+      include_vars:
+        file: vars/size/{{ cluster_size }}.yaml
+
+    - name: Check that the CA exists
+      stat:
+        path: ./ca_tls/ca.pem
+      register: ca_file
+
+    - name: Provision CA and generate TLS certificates
+      import_tasks: ./ca_tls/provision_ca_and_gen_tls_cert.yaml
+      when: ca_file.stat.exists == True
+      # TODO: Not sure if this condition is ok
+
+    - name: Create kubeconfig for each kubelet (node authorization)
+      shell: ./k8s_components_kubeconfigs/generate_node_kubeconfig.sh --node-name='worker-{{ idx }}' --k8s-public-ip='{{ k8s_public_host }}' --ca-dir='{{ playbook_dir }}/ca_tls'
+      loop:
+        - "{{ worker_ips }}"
+      loop_control:
+        index_var: idx
+
+- hosts: worker-nodes
+- name: Setup worker nodes
+  user: ubuntu
+  tasks:
+    - name: Copy certs to worker nodes
+      copy:
+        src: "{{ item.src }}"
+        dest: ~/
+      with_items:
+        - { src: './ca_tls/ca.pem' }
+        - { src: './ca_tls/kubenetes.pem' }
+        - { src: './ca_tls/kubenetes-key.pem' }
+
+
+#    - name: Create kubeconfig for each component
+#      shell:

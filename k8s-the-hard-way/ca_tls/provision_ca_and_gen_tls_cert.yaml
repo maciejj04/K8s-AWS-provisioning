@@ -1,30 +1,12 @@
----
-- hosts: localhost
-  tasks:
-    - name: Ensure cluster size exists
-      fail:
-        msg: "cluster_size variable do not exists!"
-      when: cluster_size is not defined
+- name: Provision CA
+  shell: ./generate-ca.sh
+  args:
+    chdir: "{{ playbook_dir }}/ca_tls"
 
-    - name: Load common variables
-      include_vars:
-        file: vars/commons.yaml
-
-    - name: Load cluster size specific vars
-      include_vars:
-        file: vars/size/{{ cluster_size }}.yaml
-
-    - name: Check mandatory variables
-      fail:
-        msg: "{{ item }} was not defined!"
-      when: vars[item] is undefined
-      loop:
-#        - k8s_public_adress
-#        - hosts_all
-        - worker_nodes_info
-
-    - name: Provision CA
-      shell: ./generate-ca.sh
+- name: Generate single k8s tls certificate for all clients.
+  shell: ./single_k8s_tls_cert.sh --workers-ips='{{ worker_ips | join(",") }}' --masters-ips='{{ master_ips | join(",") }}' --k8s-public-ip='{{ k8s_public_host }}'
+  args:
+    chdir: "{{ playbook_dir }}/ca_tls"
 
 #    - name: Generate admin client certificate
 #      shell: ./generate-admin-client-certificate.sh

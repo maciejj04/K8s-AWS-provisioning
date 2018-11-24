@@ -1,0 +1,4 @@
+nodes_count: 1
+master_count: 1
+master_type: t2.micro
+node_type: t2.micro

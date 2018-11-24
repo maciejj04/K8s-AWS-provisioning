@@ -1,3 +1,4 @@
 *.csr
 *.pem
 multiple_client_certificates_config
+kubernetes-client-csr.json
