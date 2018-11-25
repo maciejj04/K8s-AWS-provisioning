@@ -16,7 +16,7 @@ done
 
 function usage() {
     echo """Usage:
-        --workers-ips       - list (e.g. --workers-ips=10.10.10.1,10.1.10.5)
+        --workers-ips       - list (e.g. --workers-ips=10F.10.10.1,10.1.10.5)
         --masters-ips       - list
         --k8s-public-ip
     """
@@ -26,6 +26,11 @@ if [ -z "$WORKERS_IPS" ] || [ -z "$MASTERS_IPS" ] || [ -z "$KUBERNETES_PUBLIC_IP
     usage;
     exit 1;
 fi
+# TODO: include all master and all slave nodes in json ("master", "worker1")
+
+masters_count=$(echo ${MASTERS_IPS} | tr ',' '\n' | wc -l )
+workers_count=$(echo ${WORKERS_IPS} | tr ',' '\n' | wc -l )
+# TODO.
 
 # Mapping args to propper Json format list
 WORKERS_IPS=$(echo \"$WORKERS_IPS\" | perl -pe 's/,/","/g')

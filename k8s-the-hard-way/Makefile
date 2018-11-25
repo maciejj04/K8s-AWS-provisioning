@@ -1,2 +1,2 @@
 install-micro-cluster:
-	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem -i inventory.yaml install-k8s-cluster.yaml -e cluster_size=1mc-1mc -e cluster_size=1mc-1mc -e ansible_python_interpreter=/usr/bin/python3 #-vvvv
+	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem -i inventory.yaml install-k8s-cluster.yaml -e cluster_size=1mc-1mc -e cluster_size=1mc-1mc -e ansible_python_interpreter=/usr/bin/python3 # -vvvv

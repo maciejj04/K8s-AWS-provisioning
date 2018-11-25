@@ -1,0 +1,35 @@
+- hosts: localhost
+  tasks:
+    - name: Generate encryption config for etcd
+      shell: encryption/generate_encryption_config.sh
+
+- hosts: master-nodes
+  name: Setup master nodes
+  user: ubuntu
+  tasks:
+    - name: Set host index
+      set_fact:
+        host_idx: "{{ play_hosts.index(inventory_hostname) }}"
+
+    - name: Copy certs, kubeconfigs and encryption config to master nodes
+      copy:
+        src: "{{ item.src }}"
+        dest: ~/
+      with_items:
+        - { src: './ca_tls/ca.pem' }
+        - { src: './ca_tls/kubernetes-client.pem' }
+        - { src: './ca_tls/kubernetes-client-key.pem' }
+        - { src: 'k8s_components_kubeconfigs/worker-{{ host_idx }}.kubeconfig'}
+        - { src: 'encryption/encryption-config.yaml'}
+
+    - name: Download etcd binaries
+      get_url: url={{ etcd_download_url }} dest=~/
+
+    # TODO: Check if this works on ubuntu 18.04 machine
+    - name: Extract etcd archive
+      unarchive:
+        src: etcd-v3.3.9-linux-amd64.tar.gz #TODO: parametrize this
+        dest: ~
+
+    - name: Move etcd binaries
+      command: mv ~/etcd-v3.3.9-linux-amd64/etcd* /usr/local/bin/

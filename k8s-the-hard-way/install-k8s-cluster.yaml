@@ -9,12 +9,14 @@
       set_fact:
         master_ips: "{{ groups['master-nodes'] }}"
 
-#=== TMP
+    #TODO: Check if instances are running.
+
+    #=== TMP
     - name:
       set_fact:
         k8s_public_host: "{{ master_ips[0] }}"
       when: k8s_public_host is not defined
-#=== TMP
+    #=== TMP
 
     - name: Check mandatory variables
       fail:
@@ -43,24 +45,30 @@
       # TODO: Not sure if this condition is ok
 
     - name: Create kubeconfig for each kubelet (node authorization)
-      shell: ./k8s_components_kubeconfigs/generate_node_kubeconfig.sh --node-name='worker-{{ idx }}' --k8s-public-ip='{{ k8s_public_host }}' --ca-dir='{{ playbook_dir }}/ca_tls'
-      loop:
-        - "{{ worker_ips }}"
+      shell: ./generate_node_kubeconfig.sh --node-name='worker-{{ idx }}' --k8s-public-ip='{{ k8s_public_host }}' --ca-dir='{{ playbook_dir }}/ca_tls'
+      args:
+        chdir: k8s_components_kubeconfigs
+      loop: "{{ worker_ips }}"
       loop_control:
         index_var: idx
 
 - hosts: worker-nodes
-- name: Setup worker nodes
+  name: Setup worker nodes
   user: ubuntu
   tasks:
+    - name: Set host index
+      set_fact:
+        host_idx: "{{ play_hosts.index(inventory_hostname) }}"
+
     - name: Copy certs to worker nodes
       copy:
         src: "{{ item.src }}"
         dest: ~/
       with_items:
         - { src: './ca_tls/ca.pem' }
-        - { src: './ca_tls/kubenetes.pem' }
-        - { src: './ca_tls/kubenetes-key.pem' }
+        - { src: './ca_tls/kubernetes-client.pem' }
+        - { src: './ca_tls/kubernetes-client-key.pem' }
+        - { src: 'k8s_components_kubeconfigs/worker-{{ host_idx }}.kubeconfig'}
 
 
 #    - name: Create kubeconfig for each component
