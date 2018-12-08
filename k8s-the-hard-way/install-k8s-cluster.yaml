@@ -60,7 +60,7 @@
       set_fact:
         host_idx: "{{ play_hosts.index(inventory_hostname) }}"
 
-    - name: Copy certs to worker nodes
+    - name: Copy certs and config files to worker nodes
       copy:
         src: "{{ item.src }}"
         dest: ~/

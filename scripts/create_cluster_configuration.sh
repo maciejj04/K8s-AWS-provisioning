@@ -66,7 +66,7 @@ echo "Creating cluster configuration..."
 
 set -x 
 kops create cluster \
-      --kubernetes-version $k8s_version
+      --kubernetes-version $k8s_version \
       --cloud $cloud \
       --state $kops_state_store \
       --node-count $node_count \
@@ -76,7 +76,7 @@ kops create cluster \
       --master-count $master_count \
       --master-size $master_size \
       --cloud-labels "$cloud_labels" \
-      --name $name
+      --name $name \
       --log_dir logs
       # --master-zones $master_zones \
       # --node-security-groups sg-12345678 \

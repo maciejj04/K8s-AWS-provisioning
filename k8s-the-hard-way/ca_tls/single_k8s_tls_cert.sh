@@ -16,7 +16,7 @@ done
 
 function usage() {
     echo """Usage:
-        --workers-ips       - list (e.g. --workers-ips=10F.10.10.1,10.1.10.5)
+        --workers-ips       - list (e.g. --workers-ips=10.10.10.1,10.1.10.5)
         --masters-ips       - list
         --k8s-public-ip
     """
