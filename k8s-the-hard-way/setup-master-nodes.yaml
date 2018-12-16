@@ -6,6 +6,9 @@
       when: vars[item] is undefined
       loop:
         - etcd_download_url
+        - master_ips
+        - masters_internal_ips
+        #TODO: for now assume that masters_internal_ips will be provided manually, this is to be automated in the future.
 
     - name: Generate encryption config for etcd
       shell: ./generate_encryption_config.sh
@@ -24,6 +27,7 @@
 - hosts: master-nodes
   name: Setup master nodes
   user: ubuntu
+  gather_facts: no
   tasks:
     - name: Set host index
       set_fact:
@@ -41,6 +45,7 @@
         - { src: 'k8s_components_kubeconfigs/kube-scheduler.kubeconfig'}
         - { src: 'k8s_components_kubeconfigs/admin.kubeconfig'}
         - { src: 'encryption/encryption-config.yaml'}
+        - { src: '{{ playbook_dir }}/etcd/create_etcd_service_definition.sh'}
 #      when:
 
     - name: Download etcd binaries
@@ -63,6 +68,7 @@
         - etcd
         - etcdctl
 
+    # This should in future just ensure that appropriate volume is mounted to the instance in specified path for --data-dir.
     - name: Create etcd directories
       become: true
       file:
@@ -91,7 +97,21 @@
       command: hostname -s
       register: hostname
 
+    - name: Make create_etcd_service_definition.sh executable
+      file: dest="{{ base_user_home.stdout }}/create_etcd_service_definition.sh" mode=a+x
+
+    - name: Get current host external ip
+      set_fact:
+        host_ip: "{{ hostvars[inventory_hostname].inventory_hostname }}"
+
+    - name: Get current host internal ip
+      command: hostname -I
+      register: host_internal_ip_out
+
+    - set_fact:
+        host_internal_ip: host_internal_ip_out.stdout
+
     - name: Create etcd service definition
-      command: "./create_etcd_service_definition.sh --name etcd-{{host_idx}}-{{hostname.stdout}} --internal-ip {{ ansible_default_ipv4.address }}"
+      command: "./create_etcd_service_definition.sh --name=etcd{{host_idx}} --internal-ip={{ host_internal_ip }} --etcd-hosts-ips={{ masters_internal_ips }}"
       args:
-        chdir: "{{ playbook_dir }}/etcd"
+        chdir: "{{ base_user_home.stdout }}"
