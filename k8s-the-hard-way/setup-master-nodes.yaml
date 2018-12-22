@@ -109,9 +109,45 @@
       register: host_internal_ip_out
 
     - set_fact:
-        host_internal_ip: host_internal_ip_out.stdout
+        host_internal_ip: "{{ host_internal_ip_out.stdout }}"
 
     - name: Create etcd service definition
       command: "./create_etcd_service_definition.sh --name=etcd{{host_idx}} --internal-ip={{ host_internal_ip }} --etcd-hosts-ips={{ masters_internal_ips }}"
       args:
         chdir: "{{ base_user_home.stdout }}"
+
+    - name: move etcd service definitions
+      become: true
+      copy:
+        src: "{{ item.src }}"
+        dest: /etc/systemd/system/
+        remote_src: yes
+      with_items:
+        - { src: "{{ base_user_home.stdout }}/etcd.service" }
+
+    - name: Reload systemd to reread configs
+      become: true
+      systemd:
+        daemon_reload: yes
+      tags:
+        - systemd_test
+
+    - name: Enable etcd service
+      become: true
+      systemd:
+        name: etcd
+        enabled: yes
+
+    - name: Start etcd service
+      become: true
+      systemd:
+        name: etcd
+        state: started
+
+    - name: Validate etcd cluster health
+      become: true
+      command: etcdctl --ca-file=/etc/etcd/ca.pem cluster-health
+      register: result
+      until: result.stdout.find("cluster is healthy") != -1
+      retries: 6
+      delay: 10

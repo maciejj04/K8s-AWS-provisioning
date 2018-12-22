@@ -21,13 +21,13 @@ function mapIpsToArgFormat() {
         return
     fi
 
-    argLine+="etcd1=https://${hosts[0]}:2380"
+    argLine+="etcd0=https://${hosts[0]}:2380"
 
     for (( i=1; i<${count}; i++ ));
     do
         host=${hosts[i]}
-        rn=$((${i} + 1)) # record number
-        argLine+=",etcd${rn}=https://${host}//:2380"
+        #rn=$((${i})) # record number
+        argLine+=",etcd${i}=https://${host}:2380"
     done
 }
 

@@ -8,6 +8,9 @@ case $i in
     --workers-ips=* ) WORKERS_IPS="${i#*=}"; shift ;;
     --masters-ips=* ) MASTERS_IPS="${i#*=}"; shift ;;
     --k8s-public-ip=* ) KUBERNETES_PUBLIC_IP_ADDRESS="${i#*=}"; shift ;;
+    --workers_internal_ips=* ) WORKERS_INTERNAL_IPS="${i#*=}"; shift ;;
+    --masters_internal_ips=* ) MASTERS_INTERNAL_IPS="${i#*=}"; shift ;;
+
 
     *) echo "UNKNOWN OPTION FOR SCRIPT $0; EXITING..."
        exit 1 ;;
@@ -19,10 +22,12 @@ function usage() {
         --workers-ips       - list (e.g. --workers-ips=10.10.10.1,10.1.10.5)
         --masters-ips       - list
         --k8s-public-ip
+        --workers_internal_ips
+        --masters_internal_ips
     """
 }
 
-if [ -z "$WORKERS_IPS" ] || [ -z "$MASTERS_IPS" ] || [ -z "$KUBERNETES_PUBLIC_IP_ADDRESS" ]; then
+if [ -z "$WORKERS_IPS" ] || [ -z "$MASTERS_IPS" ] || [ -z "$KUBERNETES_PUBLIC_IP_ADDRESS" ] || [ -z "$WORKERS_INTERNAL_IPS" ] || [ -z "$MASTERS_INTERNAL_IPS" ]; then
     usage;
     exit 1;
 fi
@@ -34,7 +39,9 @@ workers_count=$(echo ${WORKERS_IPS} | tr ',' '\n' | wc -l )
 
 # Mapping args to propper Json format list
 WORKERS_IPS=$(echo \"$WORKERS_IPS\" | perl -pe 's/,/","/g')
+WORKERS_INTERNAL_IPS=$(echo \"$WORKERS_INTERNAL_IPS\" | perl -pe 's/,/","/g')
 MASTERS_IPS=$(echo \"$MASTERS_IPS\" | perl -pe 's/,/","/g')
+MASTERS_INTERNAL_IPS=$(echo \"$MASTERS_INTERNAL_IPS\" | perl -pe 's/,/","/g')
 
 echo """
 Script args:
@@ -49,8 +56,10 @@ cat > kubernetes-client-csr.json <<EOF
   "hosts": [
     "master",
     "worker1",
-    $WORKERS_IPS,
-    $MASTERS_IPS,
+    ${WORKERS_IPS},
+    ${WORKERS_INTERNAL_IPS},
+    ${MASTERS_IPS},
+    ${MASTERS_INTERNAL_IPS},
     "${KUBERNETES_PUBLIC_IP_ADDRESS}",
     "127.0.0.1"
   ],
