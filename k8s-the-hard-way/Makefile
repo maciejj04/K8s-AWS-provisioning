@@ -13,7 +13,7 @@ setup-masters:
         -e kube_controller_manager_download_url="https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-controller-manager" \
         -e kube_scheduler_download_url="https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-scheduler" \
         -e kubectl_download_url="https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl" \
-        -e cluster-cidr=10.200.0.0/16 \
+        -e cluster_cidr=10.200.0.0/16 \
         -e service_cluster_ip_range=10.32.0.0/24
 
 provision-ca:

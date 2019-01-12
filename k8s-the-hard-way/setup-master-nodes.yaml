@@ -8,6 +8,7 @@
         - etcd_download_url
         - master_ips
         - masters_internal_ips
+        - cluster_cidr
         #TODO: for now assume that masters_internal_ips will be provided manually, this is to be automated in the future.
       tags:
         - always
@@ -237,15 +238,23 @@
         master_hosts_count: "{{ groups['master-nodes'] | length }}"
         etcd_servers: "{{ masters_internal_ips.split(',') | map('regex_replace', '(.*)', 'https://\\1:2379') | join(',') }}"
 
-    - name: Create api-server service definition
-      local_action: template src="{{ playbook_dir }}/service.definitions/kube-apiserver-template.service" dest="{{ playbook_dir }}/service.definitions/kube-apiserver.service"
+    - name: Create service definitions for master binaries
+      local_action: template src="{{ playbook_dir }}/service.definitions/{{ item }}-template.service" dest="{{ playbook_dir }}/service.definitions/{{ item }}.service"
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
 
     #  Refactor to use 'copy' module to copy all service definitions at once.
-    - name: Copy api server service definition to remotes
+    - name: Copy master binaries service definitions to remotes
       become: true
       copy:
-        src: "{{ playbook_dir }}/service.definitions/kube-apiserver.service"
+        src: "{{ playbook_dir }}/service.definitions/{{ item }}.service"
         dest: /etc/systemd/system/
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
       tags:
         - control-plane
 
@@ -258,6 +267,44 @@
       loop:
         - kube-controller-manager.kubeconfig
         - kube-scheduler.kubeconfig
+      tags:
+        - control-plane
 
+    - name: Copy kube-scheduler.yaml to remotes
+      become: true
+      copy:
+        src: "{{ playbook_dir }}/k8s_components_configuration/kube-scheduler.yaml"
+        dest: /etc/kubernetes/config/kube-scheduler.yaml
+
+    - name: Reload systemd to reread configs
+      become: true
+      systemd:
+        daemon_reload: yes
+      tags:
+        - start_components
+
+    - name: Enable etcd service
+      become: true
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
+      tags:
+        - start_components
+
+    - name: Start etcd service
+      become: true
+      systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
+      tags:
+        - start_components
 
     # TODO: cleanup ~ dir

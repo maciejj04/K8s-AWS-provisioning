@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-ENCRYPTION_KEY=$(pwgen 32 1 | base64)
+ENCRYPTION_KEY=$(head -c 32 /dev/urandom | base64)
 
 cat > encryption-config.yaml <<EOF
 kind: EncryptionConfig
