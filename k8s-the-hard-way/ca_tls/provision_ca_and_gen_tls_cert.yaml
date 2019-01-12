@@ -1,18 +1,30 @@
-- name: Check mandatory variables
-  fail:
-    msg: "{{ item }} was not defined!"
-  when: vars[item] is undefined
-  loop:
-    - worker_ips
-    - master_ips
-    - workers_internal_ips
-    - masters_internal_ips
+---
+- hosts: localhost
+  tasks:
+  - name:
+    set_fact:
+      worker_ips: "{{ groups['worker-nodes'] }}"
 
-- name: Provision CA
-  shell: ./generate-ca.sh
+  - name:
+    set_fact:
+      master_ips: "{{ groups['master-nodes'] }}"
 
-- name: Generate single k8s tls certificate for all clients.
-  shell: ./single_k8s_tls_cert.sh --workers-ips='{{ worker_ips | join(",") }}' --masters-ips='{{ master_ips | join(",") }}' --k8s-public-ip='{{ k8s_public_host }}' --workers_internal_ips='{{ workers_internal_ips }}' --masters_internal_ips='{{ masters_internal_ips }}'
+  - name: Check mandatory variables
+    fail:
+      msg: "{{ item }} was not defined!"
+    when: vars[item] is undefined
+    loop:
+#      - worker_ips
+#      - master_ips
+      - workers_internal_ips
+      - masters_internal_ips
+      - k8s_public_host
+
+  - name: Provision CA
+    shell: ./generate-ca.sh
+
+  - name: Generate single k8s tls certificate for all clients.
+    shell: ./single_k8s_tls_cert.sh --workers-ips='{{ worker_ips | join(",") }}' --masters-ips='{{ master_ips | join(",") }}' --k8s-public-ip='{{ k8s_public_host }}' --workers_internal_ips='{{ workers_internal_ips }}' --masters_internal_ips='{{ masters_internal_ips }}'
 
 #    - name: Generate admin client certificate
 #      shell: ./generate-admin-client-certificate.sh
@@ -29,7 +41,3 @@
 #
 #    - name: Generate api-server certificate
 #      shell: ./generate-api-server-certificate.sh --k8s-public-adress="{{ k8s_public_adress }}" --hostnames="{{ hosts_all }}"
-
-
-
-# TODO: Add task to archive secrets for cluster.

@@ -9,20 +9,34 @@
         - master_ips
         - masters_internal_ips
         #TODO: for now assume that masters_internal_ips will be provided manually, this is to be automated in the future.
+      tags:
+        - always
 
     - name: Generate encryption config for etcd
       shell: ./generate_encryption_config.sh
       args:
         chdir: "{{ playbook_dir }}/encryption"
 
-    - name: Generate kubeconfig for masters conponents
-      command: "./generate_kubeconfig.sh --component-name={{ item }} --k8s-public-ip=127.0.0.1"
+    - name: Generate kubeconfig for masters components
+      command: "./generate_kubeconfig.sh --component-name={{ item }} --k8s-public-ip={{ k8s_public_host }}"
       args:
         chdir: "{{ playbook_dir }}/k8s_components_kubeconfigs/"
       loop:
         - kube-controller-manager
         - kube-scheduler
         - admin
+
+    - name: Get number of master nodes
+      set_fact:
+        master_hosts_count: "{{ groups['master-nodes'] | length }}"
+
+    - set_fact:
+        etcd_servers: "{{ masters_internal_ips.split(',') | map('regex_replace', '(.*)', 'https://\\1:2379') | join(',') }}"
+
+    - name: Create api server service definition
+      template:
+        src: "{{ playbook_dir }}/service.definitions/kube-apiserver-template.service"
+        dest: "{{ playbook_dir }}/service.definitions/kube-apiserver.service"
 
 - hosts: master-nodes
   name: Setup master nodes
@@ -32,6 +46,9 @@
     - name: Set host index
       set_fact:
         host_idx: "{{ play_hosts.index(inventory_hostname) }}"
+      tags:
+        - always
+
 
     - name: Copy certs, kubeconfigs and encryption config to master nodes
       copy:
@@ -59,7 +76,7 @@
     - command: pwd
       register: base_user_home
       tags:
-        - etcd
+        - always
 
     - name: Move etcd binaries
       become: true
@@ -96,6 +113,8 @@
     - name: Set host name
       command: hostname -s
       register: hostname
+      tags:
+        - always
 
     - name: Make create_etcd_service_definition.sh executable
       file: dest="{{ base_user_home.stdout }}/create_etcd_service_definition.sh" mode=a+x
@@ -103,13 +122,19 @@
     - name: Get current host external ip
       set_fact:
         host_ip: "{{ hostvars[inventory_hostname].inventory_hostname }}"
+      tags:
+        - always
 
     - name: Get current host internal ip
       command: hostname -I
       register: host_internal_ip_out
+      tags:
+        - always
 
     - set_fact:
         host_internal_ip: "{{ host_internal_ip_out.stdout }}"
+      tags:
+        - always
 
     - name: Create etcd service definition
       command: "./create_etcd_service_definition.sh --name=etcd{{host_idx}} --internal-ip={{ host_internal_ip }} --etcd-hosts-ips={{ masters_internal_ips }}"
@@ -129,8 +154,6 @@
       become: true
       systemd:
         daemon_reload: yes
-      tags:
-        - systemd_test
 
     - name: Enable etcd service
       become: true
@@ -144,6 +167,7 @@
         name: etcd
         state: started
 
+      # Validate via rc?
     - name: Validate etcd cluster health
       become: true
       command: etcdctl --ca-file=/etc/etcd/ca.pem cluster-health
@@ -151,3 +175,89 @@
       until: result.stdout.find("cluster is healthy") != -1
       retries: 6
       delay: 10
+
+    # ============================================ K8s control plane setup ============================================
+    - name: Create K8s configuration directory
+      become: true
+      file:
+        path: /etc/kubernetes/config
+        state: directory
+      tags:
+        - control-plane
+
+    - name: Pull control plane binaries
+      get_url: url={{ item }} dest=~/
+      loop:
+        - "{{ kube_apiserver_download_url }}"
+        - "{{ kube_controller_manager_download_url }}"
+        - "{{ kube_scheduler_download_url }}"
+        - "{{ kubectl_download_url }}"
+#      when:
+#        -
+      tags:
+        - control-plane
+
+    # chmod +x kube-apiserver kube-controller-manager kube-scheduler kubectl
+    - name: Chmod on control plane
+      file: dest="{{ item }}" mode=+x
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
+        - kubectl
+      tags:
+        - control-plane
+
+    # sudo mv kube-apiserver kube-controller-manager kube-scheduler kubectl /usr/local/bin/
+    - name: Move control plane binaries
+      become: true
+      command: "mv {{ item }} /usr/local/bin/"
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
+        - kubectl
+      tags:
+        - control-plane
+
+    # Configure api-server
+    - name: Create api-server directory
+      become: true
+      file:
+        path: /var/lib/kubernetes/
+        state: directory
+      tags:
+        - control-plane
+
+    - name: Move secrets
+      become: true
+      copy:
+        remote_src: yes
+        src: "{{ base_user_home.stdout }}/{{ item }}"
+        dest: /var/lib/kubernetes/
+      loop:
+        - ca.pem
+        - ca-key.pem
+        - kubernetes-client-key.pem
+        - kubernetes-client.pem
+        - encryption-config.yaml
+      tags:
+        - control-plane
+
+    #  Refactor to use 'copy' module to copy all service definitions at once.
+    - name: Copy api server service definition to remotes
+      become: true
+      copy:
+        src: "{{ playbook_dir }}/service.definitions/kube-apiserver.service"
+        dest: /etc/systemd/system/
+      tags:
+        - control-plane
+
+    - name: Move kubeconfigs to appropriate location
+      copy:
+        remote_src: yes
+        src: "{{ base_user_home.stdout }}/{{ item }}"
+        dest: /var/lib/kubernetes
+      loop:
+        - kube-controller-manager.kubeconfig
+        - kube-scheduler.kubeconfig
