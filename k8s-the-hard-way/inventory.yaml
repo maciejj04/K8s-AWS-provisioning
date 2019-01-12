@@ -2,7 +2,7 @@
 #   1. such informations has to be obtained using aws cli.
 [master-nodes]
 18.130.119.47 # AWS Elastic IP
-18.130.188.176
+18.130.189.150
 
 [worker-nodes]
 18.130.119.47 # AWS Elastic IP

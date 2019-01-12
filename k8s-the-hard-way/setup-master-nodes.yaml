@@ -26,18 +26,6 @@
         - kube-scheduler
         - admin
 
-    - name: Get number of master nodes
-      set_fact:
-        master_hosts_count: "{{ groups['master-nodes'] | length }}"
-
-    - set_fact:
-        etcd_servers: "{{ masters_internal_ips.split(',') | map('regex_replace', '(.*)', 'https://\\1:2379') | join(',') }}"
-
-    - name: Create api server service definition
-      template:
-        src: "{{ playbook_dir }}/service.definitions/kube-apiserver-template.service"
-        dest: "{{ playbook_dir }}/service.definitions/kube-apiserver.service"
-
 - hosts: master-nodes
   name: Setup master nodes
   user: ubuntu
@@ -49,13 +37,13 @@
       tags:
         - always
 
-
     - name: Copy certs, kubeconfigs and encryption config to master nodes
       copy:
         src: "{{ item.src }}"
         dest: ~/
       with_items:
         - { src: './ca_tls/ca.pem' }
+        - { src: './ca_tls/ca-key.pem' }
         - { src: './ca_tls/kubernetes-client.pem' } #?
         - { src: './ca_tls/kubernetes-client-key.pem' }
         - { src: 'k8s_components_kubeconfigs/kube-controller-manager.kubeconfig'}
@@ -244,6 +232,14 @@
       tags:
         - control-plane
 
+    - name: Get vars necessary for api-server service definition
+      set_fact:
+        master_hosts_count: "{{ groups['master-nodes'] | length }}"
+        etcd_servers: "{{ masters_internal_ips.split(',') | map('regex_replace', '(.*)', 'https://\\1:2379') | join(',') }}"
+
+    - name: Create api-server service definition
+      local_action: template src="{{ playbook_dir }}/service.definitions/kube-apiserver-template.service" dest="{{ playbook_dir }}/service.definitions/kube-apiserver.service"
+
     #  Refactor to use 'copy' module to copy all service definitions at once.
     - name: Copy api server service definition to remotes
       become: true
@@ -254,6 +250,7 @@
         - control-plane
 
     - name: Move kubeconfigs to appropriate location
+      become: true
       copy:
         remote_src: yes
         src: "{{ base_user_home.stdout }}/{{ item }}"
@@ -261,3 +258,6 @@
       loop:
         - kube-controller-manager.kubeconfig
         - kube-scheduler.kubeconfig
+
+
+    # TODO: cleanup ~ dir
