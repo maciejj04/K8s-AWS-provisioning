@@ -30,9 +30,9 @@
       include_vars:
         file: vars/commons.yaml
 
-    - name: Load cluster size specific vars
-      include_vars:
-        file: vars/size/{{ cluster_size }}.yaml
+#    - name: Load cluster size specific vars
+#      include_vars:
+#        file: vars/size/{{ cluster_size }}.yaml
 
     - name: Check that the CA exists
       stat:

@@ -18,6 +18,7 @@ Resources:
       Monitoring: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
+          PrivateIpAddress: '10.0.1.4'
           SubnetId: 'subnet-0adff0a2cc48f0f33' # TODO: extract to vars with appropriate AvailabilityZone
           DeviceIndex: '0'
           Description: 'Primary network interface'
@@ -46,6 +47,7 @@ Resources:
       Monitoring: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
+          PrivateIpAddress: '10.0.0.4'
           SubnetId: 'subnet-0525e7ef9499d1a5b' # TODO: extract to vars with appropriate AvailabilityZone
           DeviceIndex: '0'
           Description: 'Primary network interface'

@@ -1,8 +1,8 @@
 # TODO:
-#   1. such informations has to be obtained using aws cli.
+#   1. such information has to be obtained using aws cli.
 [master-nodes]
-18.130.119.47 # AWS Elastic IP
-18.130.189.150
+52.56.251.132
+35.178.130.52
 
 [worker-nodes]
-18.130.119.47 # AWS Elastic IP
+52.56.251.132

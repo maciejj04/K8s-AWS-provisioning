@@ -1,6 +1,9 @@
 ---
 - hosts: localhost
   tasks:
+  - include_vars:  # tmp
+      file: ../vars/commons.yaml
+
   - name:
     set_fact:
       worker_ips: "{{ groups['worker-nodes'] }}"
@@ -15,7 +18,7 @@
     when: vars[item] is undefined
     loop:
 #      - worker_ips
-#      - master_ips
+#      - masters_ips
       - workers_internal_ips
       - masters_internal_ips
       - k8s_public_host

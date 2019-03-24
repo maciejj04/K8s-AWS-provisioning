@@ -1,6 +1,11 @@
 - hosts: localhost
   gather_facts: no
   tasks:
+    - include_vars:
+        file: vars/commons.yaml
+      tags:
+        - always
+
     - name: Check mandatory variables
       fail:
         msg: "{{ item }} was not defined!"
@@ -33,6 +38,11 @@
   user: ubuntu
   gather_facts: no
   tasks:
+    - include_vars:
+        file: vars/commons.yaml
+      tags:
+        - always
+
     - name: Set host index
       set_fact:
         host_idx: "{{ play_hosts.index(inventory_hostname) }}"
@@ -318,13 +328,16 @@
     # TODO: 1. Provision ELB for master nodes
     # TODO: 2. Check api-server access via ELB
     - name: Validate control plane services
-      until:
-      register:
       uri:
-        url: "{{ item }}:6443/healthz"
-        status: 200 #?
-
-
+        url: "https://{{ item }}:6443/healthz"
+        status_code: 200
+      retries: 20
+      delay: 5
       loop: "{{ master_public_ips_list }}"
+
+# TODO:
+#    - name: kubectl get componentstatuses
+#      command: kubectl get componentstatuses
+
 
     # TODO: cleanup ~ dir

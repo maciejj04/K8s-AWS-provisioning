@@ -12,3 +12,5 @@ delete:
 
 get-stack-public-ips:
 	aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --filters "Name=tag:aws:cloudformation:stack-name,Values=${STACK_NAME}"
+
+gspi: get-stack-public-ips
