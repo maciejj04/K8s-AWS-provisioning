@@ -1,4 +1,5 @@
 - hosts: localhost
+  gather_facts: no
   tasks:
     - name: Check mandatory variables
       fail:
@@ -283,7 +284,7 @@
       tags:
         - start_components
 
-    - name: Enable etcd service
+    - name: Enable control plane services
       become: true
       systemd:
         name: "{{ item }}"
@@ -295,7 +296,7 @@
       tags:
         - start_components
 
-    - name: Start etcd service
+    - name: Start control plane services
       become: true
       systemd:
         name: "{{ item }}"
@@ -306,5 +307,24 @@
         - kube-scheduler
       tags:
         - start_components
+
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - name: Prepare ips
+      set_fact:
+        master_public_ips_list: "{{ master_ips.split(',') }}"
+
+    # TODO: 1. Provision ELB for master nodes
+    # TODO: 2. Check api-server access via ELB
+    - name: Validate control plane services
+      until:
+      register:
+      uri:
+        url: "{{ item }}:6443/healthz"
+        status: 200 #?
+
+
+      loop: "{{ master_public_ips_list }}"
 
     # TODO: cleanup ~ dir
