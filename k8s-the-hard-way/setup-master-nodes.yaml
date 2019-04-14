@@ -1,3 +1,4 @@
+# TODO: Refactor all script invocations to use ansible _script_ module.
 - hosts: localhost
   gather_facts: no
   tasks:

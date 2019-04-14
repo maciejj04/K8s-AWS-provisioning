@@ -1,0 +1,29 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - debug:
+        msg: test
+
+- hosts: worker-nodes
+  name: Setup worker nodes
+  user: ubuntu
+#  gather_facts: no
+  tasks:
+    - name: Install system dependencies
+      when: ansible_facts['distribution'] == "Ubuntu" # ansible_facts['distribution'] is defined (fail when undefined?)
+      become: true
+      # TODO: async
+      block:
+        - name: Update and upgrade apt packages
+          apt:
+            upgrade: yes
+            update_cache: yes
+        - name: Install os dependencies
+          apt:
+            name: "{{ packages }}"
+          vars:
+            packages:
+            - socat
+            - conntrack
+            - ipset
+#  sudo apt-get -y install socat conntrack ipset

@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: "EC2 provisioning for k8s cluster"
+Description: "Worker EC2 provisioning for k8s cluster"
 Resources:
-  K8sMaster1:
+  K8sWorker1:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: 'eu-west-2b' # TODO: extract to vars with appropriate subnet (SubnetId)
@@ -18,20 +18,20 @@ Resources:
       Monitoring: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
-          PrivateIpAddress: '10.0.1.4'
+          PrivateIpAddress: '10.0.1.5'
           SubnetId: 'subnet-0adff0a2cc48f0f33' # TODO: extract to vars with appropriate AvailabilityZone
           DeviceIndex: '0'
           Description: 'Primary network interface'
           GroupSet:
-            - 'sg-0ff66e9c317ef7b8c' # k8s-master-internal (master)
-            - 'sg-0a88a1b5d344cef64' # k8s-master-external (master)
+            - 'sg-074c143d0f082afe6' # k8s-worker-internal (worker)
+            - 'sg-0563033eb08ea547e' # k8s-worker-external (worker)
       Tags:
         - Key: node-type
-          Value: master
+          Value: compute
         - Key: Name
-          Value: k8s-master
+          Value: k8s-worker
 
-  K8sMaster2:
+  K8sWorker2:
     Type: AWS::EC2::Instance
     Properties:
       AvailabilityZone: 'eu-west-2a' # TODO: extract to vars with appropriate subnet (SubnetId)
@@ -47,15 +47,15 @@ Resources:
       Monitoring: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
-          PrivateIpAddress: '10.0.0.4'
+          PrivateIpAddress: '10.0.0.5'
           SubnetId: 'subnet-0525e7ef9499d1a5b' # TODO: extract to vars with appropriate AvailabilityZone
           DeviceIndex: '0'
           Description: 'Primary network interface'
           GroupSet:
-            - 'sg-0ff66e9c317ef7b8c' # k8s-master-internal (master)
-            - 'sg-0a88a1b5d344cef64' # k8s-master-external (master)
+            - 'sg-074c143d0f082afe6' # k8s-worker-internal (worker)
+            - 'sg-0563033eb08ea547e' # k8s-worker-external (worker)
       Tags:
         - Key: node-type
-          Value: master
+          Value: compute
         - Key: Name
-          Value: k8s-master
+          Value: k8s-worker

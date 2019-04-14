@@ -16,3 +16,7 @@ setup-control-plane:
 	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-master-nodes.yaml -i inventory.yaml --tags control-plane \
 	    -e ansible_python_interpreter=/usr/bin/python3 \
         -e master_ips=18.130.119.47,18.130.189.150
+
+setup-workers:
+	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-worker-nodes.yaml -i inventory.yaml \
+	    -e ansible_python_interpreter=/usr/bin/python3
