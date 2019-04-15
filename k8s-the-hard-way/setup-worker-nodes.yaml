@@ -9,16 +9,34 @@
   user: ubuntu
 #  gather_facts: no
   tasks:
+    - include_vars:
+        file: "{{ item }}"
+      loop:
+        - vars/commons.yaml
+        - vars/worker.yaml
+      tags:
+        - always
+
+    - name: Set host index
+      set_fact:
+        host_idx: "{{ play_hosts.index(inventory_hostname) }}"
+      tags:
+        - always
+
     - name: Install system dependencies
       when: ansible_facts['distribution'] == "Ubuntu" # ansible_facts['distribution'] is defined (fail when undefined?)
       become: true
       # TODO: async
       block:
         - name: Update and upgrade apt packages
+          async: 60
+          poll: 5
           apt:
             upgrade: yes
             update_cache: yes
         - name: Install os dependencies
+          async: 60
+          poll: 5
           apt:
             name: "{{ packages }}"
           vars:
@@ -26,4 +44,59 @@
             - socat
             - conntrack
             - ipset
-#  sudo apt-get -y install socat conntrack ipset
+
+    - name: Download and Install Worker Binaries
+      async: "{{ default_async_timeout }}"
+      poll: "{{ default_async_poll }}"
+      get_url: url={{ item.value }} dest=~/
+      with_dict: "{{ worker_resources }}"
+
+    - name: Create config dirs
+      async: "{{ default_async_timeout }}"
+      poll: "{{ default_async_poll }}"
+      become: true
+      file:
+        path: "{{ item.value }}"
+        state: directory
+        #recurse: yes
+      with_dict: "{{ worker_config_dirs }}"
+
+    - command: mv runc.amd64 runc
+      ignore_errors: yes
+
+    - name: chmod +x kubectl kube-proxy kubelet runc.amd64 runsc
+      file: dest="{{ item }}" mode=+x
+      loop:
+        - kubectl
+        - kube-proxy
+        - kubelet
+        - runc
+        - runsc
+
+    - name: Move worker binaries
+      become: true
+      command: mv kubectl kube-proxy kubelet runc runsc /usr/local/bin/
+
+    - name: Extract archives
+      become: true
+      unarchive: src={{ item.src }} dest={{ item.dest }} remote_src=yes
+      with_items:
+        - { src: "/home/ubuntu/{{ crictl_version }}.tar.gz", dest: "/usr/local/bin/" }
+        - { src: "/home/ubuntu/{{ cni_plugins_version }}.tgz", dest: "/opt/cni/bin/" }
+        - { src: "/home/ubuntu/{{ containerd_version }}.tar.gz", dest: "/" }
+
+    - name: Set nodes pod cidr
+      set_fact:
+        node_pod_cidr: "10.200.{{ host_idx }}.0/24"
+
+    - name: Process bridge network template and send to remote
+      become: true
+      template:
+        src: "{{ playbook_dir }}/k8s_components_configuration/bridge-network.conf"
+        dest: /etc/cni/net.d/10-bridge.conf
+
+    - name: Copy loopback net configuration to remote
+      become: true
+      copy:
+        src: "{{ playbook_dir }}/k8s_components_configuration/loopback-network.conf"
+        dest: /etc/cni/net.d/99-loopback.conf

@@ -1,9 +1,10 @@
 owner: "Maciej Jozefczyk"
-etcd_download_url: "https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz"
-kube_apiserver_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-apiserver"
-kube_controller_manager_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-controller-manager"
-kube_scheduler_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kube-scheduler"
-kubectl_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.12.0/bin/linux/amd64/kubectl"
+
+kubectl_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl"
 cluster_cidr: 10.200.0.0/16
 service_cluster_ip_range: 10.32.0.0/24
 masters_internal_ips: 10.0.0.4,10.0.1.4
+
+
+default_async_timeout: 120
+default_async_poll: 10

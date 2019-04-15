@@ -1,0 +1,4 @@
+etcd_download_url: "https://github.com/coreos/etcd/releases/download/v3.3.9/etcd-v3.3.9-linux-amd64.tar.gz"
+kube_apiserver_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kube-apiserver"
+kube_controller_manager_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kube-controller-manager"
+kube_scheduler_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kube-scheduler"

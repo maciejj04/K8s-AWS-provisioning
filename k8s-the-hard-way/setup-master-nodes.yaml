@@ -3,7 +3,10 @@
   gather_facts: no
   tasks:
     - include_vars:
-        file: vars/commons.yaml
+        file: "{{ item }}"
+      loop:
+        - vars/commons.yaml
+        - vars/master.yaml
       tags:
         - always
 
@@ -40,7 +43,10 @@
   gather_facts: no
   tasks:
     - include_vars:
-        file: vars/commons.yaml
+        file: "{{ item }}"
+      loop:
+        - vars/commons.yaml
+        - vars/master.yaml
       tags:
         - always
 
@@ -341,4 +347,4 @@
 #      command: kubectl get componentstatuses
 
 
-    # TODO: cleanup ~ dir
+    # TODO: cleanup ~ dir`

@@ -20,3 +20,7 @@ setup-control-plane:
 setup-workers:
 	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-worker-nodes.yaml -i inventory.yaml \
 	    -e ansible_python_interpreter=/usr/bin/python3
+
+setup-workers-test:
+	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-worker-nodes.yaml -i inventory.yaml \
+	    -e ansible_python_interpreter=/usr/bin/python3 --tags test
