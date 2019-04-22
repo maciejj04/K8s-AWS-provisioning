@@ -3,7 +3,7 @@ cni_plugins_version: "cni-plugins-amd64-v0.7.1"
 containerd_version: "containerd-1.2.0-beta.2.linux-amd64"
 
 worker_resources:
-  - crictl_url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/{{ crictl_version }}.gz"
+  - crictl_url: "https://github.com/kubernetes-sigs/cri-tools/releases/download/v1.13.0/{{ crictl_version }}.tar.gz"
   - runcs_url: "https://storage.googleapis.com/gvisor/releases/nightly/latest/runsc" # <- gVisor | old: https://storage.googleapis.com/kubernetes-the-hard-way/runsc
   - runc_url: "https://github.com/opencontainers/runc/releases/download/v1.0.0-rc5/runc.amd64"
   - cni_plugins_url: "https://github.com/containernetworking/plugins/releases/download/v0.7.1/{{ cni_plugins_version }}.tgz"
@@ -20,3 +20,7 @@ worker_config_dirs:
   kube-proxy: "/var/lib/kube-proxy"
   k8s_lib: "/var/lib/kubernetes"
   k8s_run: "/var/run/kubernetes"
+  containerd: "/etc/containerd"
+
+
+workers_ips: "{{ groups['worker-nodes'] }}"

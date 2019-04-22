@@ -7,7 +7,7 @@ case $i in
     --k8s-public-ip=* ) MASTERS_IP="${i#*=}"; shift ;;
     --ca-dir=* ) CA_DIR="${i#*=}"; shift ;;
 
-    *) echo "UNKNOWN OPTION FOR SCRIPT $0; EXITING..."
+    *) echo "$i is UNKNOWN OPTION FOR SCRIPT; EXITING..."
        exit 1 ;;
 esac
 done

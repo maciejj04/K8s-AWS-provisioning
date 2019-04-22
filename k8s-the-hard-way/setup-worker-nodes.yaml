@@ -1,8 +1,27 @@
 - hosts: localhost
   gather_facts: no
   tasks:
-    - debug:
-        msg: test
+    - include_vars:
+        file: "{{ item }}"
+      loop:
+        - vars/commons.yaml
+        - vars/worker.yaml
+      tags:
+        - test
+
+    - name: MOCKING!
+      include_vars:
+        file: vars/mock.yaml
+      tags:
+        - mock
+        - test
+
+    - name: Create kubeconfig for each kubelet (node authorization)
+      include: "{{ playbook_dir }}/k8s_components_kubeconfigs/prepare_kubelet_kubeconfig.yaml"
+      with_items: "{{ groups['worker-nodes'] }}"
+      loop_control:
+        loop_var: ip
+        index_var: host_idx
 
 - hosts: worker-nodes
   name: Setup worker nodes
@@ -23,20 +42,25 @@
       tags:
         - always
 
+    - name: Check mandatory variables
+      fail:
+        msg: "{{ item }} was not defined!"
+      when: vars[item] is undefined or vars[item] == None
+      loop:
+        - masters_frontend_lb
+      tags:
+        - always
+
     - name: Install system dependencies
       when: ansible_facts['distribution'] == "Ubuntu" # ansible_facts['distribution'] is defined (fail when undefined?)
       become: true
       # TODO: async
       block:
         - name: Update and upgrade apt packages
-          async: 60
-          poll: 5
           apt:
             upgrade: yes
             update_cache: yes
         - name: Install os dependencies
-          async: 60
-          poll: 5
           apt:
             name: "{{ packages }}"
           vars:
@@ -100,3 +124,26 @@
       copy:
         src: "{{ playbook_dir }}/k8s_components_configuration/loopback-network.conf"
         dest: /etc/cni/net.d/99-loopback.conf
+
+    - name: Copy certs and config files to worker nodes
+      become: true
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: "{{ playbook_dir }}/ca_tls/ca.pem", dest: "/var/lib/kubernetes/" }
+        - { src: "{{ playbook_dir }}/ca_tls/kubernetes-client.pem", dest: "/var/lib/kubelet/" }
+        - { src: "{{ playbook_dir }}/ca_tls/kubernetes-client-key.pem", dest: "/var/lib/kubelet/" }
+        - { src: "{{ playbook_dir }}/k8s_components_kubeconfigs/worker-{{ host_idx }}.kubeconfig", dest: "/var/lib/kubelet/kubeconfig" }
+
+    - name: Template kubelet-config
+      become: true
+      template:
+        src: "{{ playbook_dir }}/k8s_components_configuration/kubelet-config.yaml"
+        dest: /var/lib/kubelet/kubelet-config.yaml
+
+    - name: Copy kubelet.service
+      become: true
+      copy:
+        src: "{{ playbook_dir }}/service.definitions/kubelet.service"
+        dest: /etc/systemd/system/kubelet.service

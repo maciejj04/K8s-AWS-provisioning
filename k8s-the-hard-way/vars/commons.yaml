@@ -1,10 +1,14 @@
 owner: "Maciej Jozefczyk"
+cluster_name: mj-k8s
 
 kubectl_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl"
 cluster_cidr: 10.200.0.0/16
 service_cluster_ip_range: 10.32.0.0/24
 masters_internal_ips: 10.0.0.4,10.0.1.4
 
-
 default_async_timeout: 120
 default_async_poll: 10
+
+
+# ==========!!===========  Changed each time stack changes ===============!!===============
+masters_frontend_lb: ''

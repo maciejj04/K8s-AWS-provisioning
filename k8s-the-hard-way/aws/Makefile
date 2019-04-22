@@ -8,6 +8,7 @@ validatem:
 
 create-m:
 	aws cloudformation create-stack --template-body ${CF_MASTER_TEMPL_PATH} --stack-name=${MASTER_STACK_NAME}
+	# TODO: add aws ELB to the stack
 
 delete-m:
 	aws cloudformation delete-stack --stack-name=${MASTER_STACK_NAME}
