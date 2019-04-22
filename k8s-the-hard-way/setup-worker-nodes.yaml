@@ -23,6 +23,9 @@
         loop_var: ip
         index_var: host_idx
 
+    - name: Create kubeconfig for kubeproxy (node authorization)
+      include: "{{ playbook_dir }}/k8s_components_kubeconfigs/prepare_kube_proxy_kubeconfig.yaml"
+
 - hosts: worker-nodes
   name: Setup worker nodes
   user: ubuntu
@@ -125,6 +128,17 @@
         src: "{{ playbook_dir }}/k8s_components_configuration/loopback-network.conf"
         dest: /etc/cni/net.d/99-loopback.conf
 
+    - name: Copy containerd config and service definition to remote
+      become: true
+      copy:
+        src: "{{ item.src }}"
+        dest: "{{ item.dest}}"
+      with_items:
+        - { src: "{{ playbook_dir }}/k8s_components_configuration/containerd_conf.toml", dest: "/etc/containerd/config.toml" }
+        - { src: "{{ playbook_dir }}/service.definitions/containerd.service", dest: "/etc/systemd/system/containerd.service" }
+      tags:
+        - test
+
     - name: Copy certs and config files to worker nodes
       become: true
       copy:
@@ -142,8 +156,56 @@
         src: "{{ playbook_dir }}/k8s_components_configuration/kubelet-config.yaml"
         dest: /var/lib/kubelet/kubelet-config.yaml
 
-    - name: Copy kubelet.service
+    - name: Copy kubelet.service to remotes
       become: true
       copy:
         src: "{{ playbook_dir }}/service.definitions/kubelet.service"
         dest: /etc/systemd/system/kubelet.service
+
+    - name: Template kube-proxy-config
+      become: true
+      template:
+        src: "{{ playbook_dir }}/k8s_components_configuration/kube-proxy-config.yaml"
+        dest: /var/lib/kube-proxy/kube-proxy-config.yaml
+
+    - name: Copy kube-proxy kubeconfig and service definition
+      become: true
+      copy:
+        src:  "{{ item.src }}"
+        dest: "{{ item.dest }}"
+      with_items:
+        - { src: "{{ playbook_dir }}/service.definitions/kube-proxy.service", dest: /etc/systemd/system/kube-proxy.service }
+        - { src: "{{ playbook_dir }}/k8s_components_kubeconfigs/kube-proxy.kubeconfig", dest: /var/lib/kube-proxy/kubeconfig }
+
+    - name: Reload systemd to reread configs
+      become: true
+      systemd:
+        daemon_reload: yes
+      tags:
+        - start_components
+
+    - name: Enable control plane services
+      become: true
+      systemd:
+        name: "{{ item }}"
+        enabled: yes
+      loop:
+        - containerd
+        - kubelet
+        - kube-proxy
+      tags:
+        - start_components
+
+    - name: Start control plane services
+      become: true
+      systemd:
+        name: "{{ item }}"
+        state: started
+      loop:
+        - containerd
+        - kubelet
+        - kube-proxy
+      tags:
+        - start_components
+
+      #TODO: validate ndoe components.
