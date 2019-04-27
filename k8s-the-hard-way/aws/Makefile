@@ -8,7 +8,6 @@ validatem:
 
 create-m:
 	aws cloudformation create-stack --template-body ${CF_MASTER_TEMPL_PATH} --stack-name=${MASTER_STACK_NAME}
-	# TODO: add aws ELB to the stack
 
 delete-m:
 	aws cloudformation delete-stack --stack-name=${MASTER_STACK_NAME}
@@ -16,7 +15,11 @@ delete-m:
 get-mstack-public-ips:
 	aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --filters "Name=tag:aws:cloudformation:stack-name,Values=${MASTER_STACK_NAME}"
 
+get-elb-dns:
+	aws elbv2 describe-load-balancers --name "mj-dev-k8s-master-frontend-lb" --query "LoadBalancers[].DNSName" --output=text
+
 gmspi: get-mstack-public-ips
+ged: get-elb-dns
 
 #==========================================================
 

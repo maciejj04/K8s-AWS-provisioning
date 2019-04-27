@@ -1,3 +1,4 @@
+# TODO: Should not expose public ip adress - use bastion host
 AWSTemplateFormatVersion: '2010-09-09'
 Description: "EC2 provisioning for k8s cluster"
 Resources:
@@ -59,3 +60,70 @@ Resources:
           Value: master
         - Key: Name
           Value: k8s-master
+
+
+  K8sMasterFrontendLB:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: "mj-dev-k8s-master-frontend-lb"
+      Scheme: "internet-facing" # internet-facing is default
+#      SecurityGroups:
+#        - 'sg-0a383442095430d4f' # Not supported for network load balancer
+      Subnets:
+        - 'subnet-0525e7ef9499d1a5b'
+        - 'subnet-0adff0a2cc48f0f33'
+      Type: 'network'
+      Tags:
+      - Key: Name
+        Value: k8s-master-lb
+
+  LoadBalancerListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      LoadBalancerArn: !Ref K8sMasterFrontendLB
+      Port: 443
+      Protocol: TCP
+      DefaultActions:
+        - Type: forward
+          TargetGroupArn: !Ref ELBTargetGroup
+
+
+  ELBTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      Name: "k8s-frontend-lb-target-group"
+      Port: 6443
+      Protocol: TCP
+      TargetType: 'ip'
+      Targets:
+      - AvailabilityZone: 'eu-west-2a'
+        Id: '10.0.0.4'
+      - AvailabilityZone: 'eu-west-2b'
+        Id: '10.0.1.4'
+#        Port: '80'
+      VpcId: 'vpc-039c7b915cc707025'
+      Tags:
+      - Key: Name
+        Value: k8s-master-lb-target-group
+#      HealthCheckEnabled: true
+#      HealthCheckIntervalSeconds: 10
+#      HealthCheckPath: /healthz #?
+      HealthCheckPort: 22
+      HealthCheckProtocol: TCP
+#      HealthCheckTimeoutSeconds: Integer
+#      HealthyThresholdCount: Integer
+#      Matcher: 200-299 ?
+#      UnhealthyThresholdCount: Integer
+
+Outputs:
+  LoadBalancer:
+    Description: A reference to the Application Load Balancer
+    Value: !Ref LoadBalancer
+
+  LoadBalancerUrl:
+    Description: The URL of the ALB
+    Value: !GetAtt LoadBalancer.DNSName
+
+  Listener:
+    Description: A reference to a port 80 listener
+    Value: !Ref LoadBalancerListener

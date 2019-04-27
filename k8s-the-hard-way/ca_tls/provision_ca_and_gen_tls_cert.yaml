@@ -17,8 +17,8 @@
       msg: "{{ item }} was not defined!"
     when: vars[item] is undefined
     loop:
-#      - worker_ips
-#      - masters_ips
+      - worker_ips
+      - masters_ips
       - workers_internal_ips
       - masters_internal_ips
       - k8s_public_host
