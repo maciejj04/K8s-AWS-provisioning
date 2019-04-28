@@ -33,7 +33,7 @@ delete-w:
 	aws cloudformation delete-stack --stack-name=${WORKER_STACK_NAME}
 
 get-wstack-public-ips:
-	aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --filters "Name=tag:aws:cloudformation:stack-name,Values=${WORKER_STACK_NAME}"
+	@aws ec2 describe-instances --query "Reservations[*].Instances[*].PublicIpAddress" --output=text --filters "Name=tag:aws:cloudformation:stack-name,Values=${WORKER_STACK_NAME}"
 
 gwspi: get-wstack-public-ips
 

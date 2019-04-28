@@ -77,7 +77,7 @@ Resources:
       - Key: Name
         Value: k8s-master-lb
 
-  LoadBalancerListener:
+  ELBListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       LoadBalancerArn: !Ref K8sMasterFrontendLB
@@ -118,12 +118,12 @@ Resources:
 Outputs:
   LoadBalancer:
     Description: A reference to the Application Load Balancer
-    Value: !Ref LoadBalancer
+    Value: !Ref K8sMasterFrontendLB
 
   LoadBalancerUrl:
     Description: The URL of the ALB
-    Value: !GetAtt LoadBalancer.DNSName
+    Value: !GetAtt K8sMasterFrontendLB.DNSName
 
   Listener:
     Description: A reference to a port 80 listener
-    Value: !Ref LoadBalancerListener
+    Value: !Ref ELBListener

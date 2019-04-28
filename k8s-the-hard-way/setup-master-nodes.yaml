@@ -332,19 +332,26 @@
       set_fact:
         master_public_ips_list: "{{ master_ips.split(',') }}"
 
-    # TODO: 1. Provision ELB for master nodes
-    # TODO: 2. Check api-server access via ELB
     - name: Validate api server(s) health
       uri:
         url: "https://{{ item }}:6443/healthz"
         status_code: 200
+        validate_certs: no
       retries: 20
       delay: 5
       loop: "{{ master_public_ips_list }}"
+
+    - name: Verify api server access via frontend LB
+      uri:
+        url: "https://{{ k8s_public_host }}/healthz"
+        status_code: 200
+        validate_certs: no
+      retries: 3
+      delay: 5
 
 # TODO:
 #    - name: kubectl get componentstatuses
 #      command: kubectl get componentstatuses
 
 
-    # TODO: cleanup ~ dir`
+# TODO: cleanup ~ dir
