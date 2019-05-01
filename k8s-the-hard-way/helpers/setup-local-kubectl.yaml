@@ -1,0 +1,17 @@
+- hosts: localhost
+  gather_facts: no
+  tasks:
+    - set_fact:
+        cluster_name: mj-k8s
+
+    - name:
+      command: kubectl config set-cluster {{ cluster_name }} --certificate-authority={{ playbook_dir }}/../ca_tls/ca.pem --embed-certs=true --server=https://{{ k8s_frontend_dns }}:443
+
+    - name:
+      command: kubectl config set-credentials admin --client-certificate={{ playbook_dir }}/../ca_tls/kubernetes-client.pem --client-key={{ playbook_dir }}/../ca_tls/kubernetes-client-key.pem
+
+    - name:
+      command: kubectl config set-context {{ cluster_name }} --cluster={{ cluster_name }} --user=admin
+
+    - name:
+      command: kubectl config use-context {{ cluster_name }}

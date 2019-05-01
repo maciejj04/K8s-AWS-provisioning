@@ -139,12 +139,23 @@
         - always
 
     - set_fact:
-        host_internal_ip: "{{ host_internal_ip_out.stdout }}"
+        host_internal_ip: "{{ host_internal_ip_out.stdout | trim }}"
       tags:
         - always
 
+    - debug:
+        msg: "Set host_internal_ip  to {{ host_internal_ip }}"
+
+    - name: Prepare masters internal ip list
+      set_fact:
+        master_peers_internal_ips_list:  "{{ masters_internal_ips.split(',') | difference([ host_internal_ip ]) | join(',') }}"
+
+    - name: Peers ips
+      debug:
+        msg: "{{ master_peers_internal_ips_list }}"
+
     - name: Create etcd service definition
-      command: "./create_etcd_service_definition.sh --name=etcd{{host_idx}} --internal-ip={{ host_internal_ip }} --etcd-hosts-ips={{ masters_internal_ips }}"
+      command: "./create_etcd_service_definition.sh --name=etcd{{host_idx}} --index={{ host_idx }} --internal-ip={{ host_internal_ip }} --etcd-hosts-ips={{ master_peers_internal_ips_list }}"
       args:
         chdir: "{{ base_user_home.stdout }}"
 
@@ -331,6 +342,8 @@
     - name: Prepare ips
       set_fact:
         master_public_ips_list: "{{ master_ips.split(',') }}"
+      tags:
+        - test
 
     - name: Validate api server(s) health
       uri:
@@ -340,6 +353,8 @@
       retries: 20
       delay: 5
       loop: "{{ master_public_ips_list }}"
+      tags:
+        - test
 
     - name: Verify api server access via frontend LB
       uri:
@@ -348,6 +363,8 @@
         validate_certs: no
       retries: 3
       delay: 5
+      tags:
+        - test
 
 # TODO:
 #    - name: kubectl get componentstatuses

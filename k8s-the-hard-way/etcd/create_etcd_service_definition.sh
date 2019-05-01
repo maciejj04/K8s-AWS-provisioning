@@ -1,9 +1,12 @@
 #!/usr/bin/env bash
 
+# TODO: Rewrite this script to ansible
+
 for i in "$@"
 do
 case $i in
     --name=* ) ETCD_NAME="${i#*=}"; shift ;;
+    --index=* ) INDEX="${i#*=}"; shift ;;
     --internal-ip=* ) INTERNAL_IP="${i#*=}"; shift ;;
     --etcd-hosts-ips=* ) ETCD_HOSTS_IPS="${i#*=}"; shift ;;
 
@@ -16,18 +19,23 @@ function mapIpsToArgFormat() {
     IFS=',' read -r -a hosts <<< "$1"
 
     count=${#hosts[@]}
-    if [ ${count} = "0" ]; then
+    if [ ${count} =  "0" ]; then
         echo "No peer hosts given"
         return
     fi
+    echo "Found ${count} hosts"
 
-    argLine+="etcd0=https://${hosts[0]}:2380"
+    argLine+="etcd${INDEX}=https://${INTERNAL_IP}:2380"
 
-    for (( i=1; i<${count}; i++ ));
+    for (( i=0, idx=0; i<${count}; i++, idx++ ));
     do
         host=${hosts[i]}
-        #rn=$((${i})) # record number
-        argLine+=",etcd${i}=https://${host}:2380"
+
+        if [ ${idx} = ${INDEX} ]; then
+            idx=$(( idx + 1 ))
+        fi
+
+        argLine+=",etcd${idx}=https://${host}:2380"
     done
 }
 
