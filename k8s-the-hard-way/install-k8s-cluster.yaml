@@ -66,8 +66,8 @@
         dest: ~/
       with_items:
         - { src: './ca_tls/ca.pem' }
-        - { src: './ca_tls/kubernetes-client.pem' }
-        - { src: './ca_tls/kubernetes-client-key.pem' }
+        - { src: './ca_tls/kubernetes.pem' }
+        - { src: './ca_tls/kubernetes-key.pem' }
         - { src: 'k8s_components_kubeconfigs/worker-{{ host_idx }}.kubeconfig'}
 
 

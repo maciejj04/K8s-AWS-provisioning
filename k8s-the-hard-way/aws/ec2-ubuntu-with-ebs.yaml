@@ -30,7 +30,7 @@ Resources:
         - Key: node-type
           Value: master
         - Key: Name
-          Value: k8s-master
+          Value: k8s-master-1
 
   K8sMaster2:
     Type: AWS::EC2::Instance
@@ -59,7 +59,7 @@ Resources:
         - Key: node-type
           Value: master
         - Key: Name
-          Value: k8s-master
+          Value: k8s-master-2
 
 
   K8sMasterFrontendLB:

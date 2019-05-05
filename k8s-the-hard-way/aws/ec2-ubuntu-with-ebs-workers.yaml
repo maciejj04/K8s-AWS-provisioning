@@ -29,7 +29,7 @@ Resources:
         - Key: node-type
           Value: compute
         - Key: Name
-          Value: k8s-worker
+          Value: k8s-worker-1
 
   K8sWorker2:
     Type: AWS::EC2::Instance
@@ -58,4 +58,4 @@ Resources:
         - Key: node-type
           Value: compute
         - Key: Name
-          Value: k8s-worker
+          Value: k8s-worker-2

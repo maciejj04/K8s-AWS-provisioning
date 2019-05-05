@@ -1,0 +1,22 @@
+- name: Check mandatory variables
+  fail:
+    msg: "{{ item }} was not defined!"
+  when: vars[item] is undefined
+  loop:
+    - host_internal_ip
+    - host_external_ip
+    - host_idx
+
+- set_fact:
+    instance_hostname: "ip-{{ host_internal_ip | replace('.', '-') }}"
+
+- name: Template certificate signing request file
+  template:
+    src: instance-csr.json.j2
+    dest: "{{ playbook_dir }}/ca_tls/node/worker-{{ host_idx }}-csr.json"
+  delegate_to: localhost # Check if needed
+
+- name: Generate a certificate and private key for each Kubernetes worker node
+  shell: "cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -hostname={{ instance_hostname }},{{ host_external_ip }},{{host_internal_ip}} -profile=kubernetes worker-{{ host_idx }}-csr.json | cfssljson -bare worker-{{ host_idx }}"
+  args:
+    chdir: "{{ playbook_dir }}/ca_tls/node"

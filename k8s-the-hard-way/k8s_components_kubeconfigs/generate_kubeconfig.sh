@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
 
+#TODO: Move to ansible scripts
+
 for i in "$@"
 do
 case $i in
@@ -19,10 +21,10 @@ done
     --kubeconfig=${COMPONENT_NAME}.kubeconfig
 
   kubectl config set-credentials system:${COMPONENT_NAME} \
-    --client-certificate=../ca_tls/kubernetes-client.pem \
-    --client-key=kubernetes-client-key.pem \
+    --client-certificate=../ca_tls/node/${COMPONENT_NAME}.pem \
+    --client-key=../ca_tls/node/${COMPONENT_NAME}-key.pem \
     --embed-certs=true \
-    --kubeconfig=${COMPONENT_NAME}.kubeconfig
+    --kubeconfig=${COMPONENT_NAME}.kubeconfig#
 
   kubectl config set-context default \
     --cluster=mj-k8s \

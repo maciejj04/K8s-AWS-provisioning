@@ -1,9 +1,9 @@
 # TODO:
 #   1. such information has to be obtained using aws cli.
 [master-nodes]
-18.130.204.147
-35.178.184.251
+52.56.237.239
+18.130.244.4
 
 [worker-nodes]
-35.178.156.224
-52.56.65.84
+35.178.186.135
+52.56.207.251

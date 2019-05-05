@@ -15,12 +15,12 @@ done
 kubectl config set-cluster mj-k8s \
   --certificate-authority=${CA_DIR}/ca.pem \
   --embed-certs=true \
-  --server=https://${MASTERS_IP}:6443 \
+  --server=https://${MASTERS_IP}:443 \
   --kubeconfig=${NODE_NAME}.kubeconfig
 
 kubectl config set-credentials system:node:${NODE_NAME} \
-  --client-certificate=${CA_DIR}/kubernetes-client.pem \
-  --client-key=${CA_DIR}/kubernetes-client-key.pem \
+  --client-certificate=${CA_DIR}/kubernetes.pem \
+  --client-key=${CA_DIR}/kubernetes-key.pem \
   --embed-certs=true \
   --kubeconfig=${NODE_NAME}.kubeconfig
 

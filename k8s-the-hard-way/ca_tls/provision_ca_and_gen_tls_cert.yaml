@@ -25,17 +25,13 @@
       - k8s_public_host
 
   - name: Provision CA
-    shell: ./generate-ca.sh
+    shell: cfssl gencert -initca ca-csr.json | cfssljson -bare ca
 
   - name: Generate single k8s tls certificate for all clients.
     shell: ./single_k8s_tls_cert.sh --workers-ips='{{ worker_ips | join(",") }}' --masters-ips='{{ master_ips | join(",") }}' --k8s-public-ip='{{ k8s_public_host }}' --workers_internal_ips='{{ workers_internal_ips }}' --masters_internal_ips='{{ masters_internal_ips }}'
 
-#    - name: Generate admin client certificate
-#      shell: ./generate-admin-client-certificate.sh
-#
-#    - name: Generate kubelet client certificates for each node
-#      shell: ./generate-kubelet-client-certificates.sh -n="{{ item.nr }}" -i="{{ item.internal_ip }}" -e="{{ item.external_ip }}"
-#      with_items: "{{ worker_nodes_info }}"
+  - name: Generate admin client certificate
+    shell: cfssl gencert -ca=ca.pem -ca-key=ca-key.pem -config=ca-config.json -profile=kubernetes admin-csr.json | cfssljson -bare admin
 
 #    - name: Generate kube-controller-manager cert and ey
 #      shell: ./generate-kube-controller-manager-cert-and-key.sh

@@ -28,14 +28,31 @@
       args:
         chdir: "{{ playbook_dir }}/encryption"
 
-    - name: Generate kubeconfig for masters components
-      command: "./generate_kubeconfig.sh --component-name={{ item }} --k8s-public-ip={{ k8s_public_host }}"
+    # TODO: 10.32.0.10 or 10.32.0.1? https://github.com/prabhatsharma/kubernetes-the-hard-way-aws/issues/2
+    - name: Create Api Server Certificate
+      shell: cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -hostname='10.32.0.1,{{ clusterDNS }},{{ masters_internal_ips }},{{ k8s_public_host }},127.0.0.1,kubernetes.default' -profile=kubernetes ../master/kubernetes-csr.json | cfssljson -bare kubernetes
       args:
-        chdir: "{{ playbook_dir }}/k8s_components_kubeconfigs/"
+        chdir: "{{ playbook_dir }}/ca_tls/master"
+
+    - name: Create The Scheduler&Controller-Manager&service-account Client Certificates
+      shell: cfssl gencert -ca=../ca.pem -ca-key=../ca-key.pem -config=../ca-config.json -profile=kubernetes {{ playbook_dir }}/ca_tls/master/{{ item }}-csr.json | cfssljson -bare {{ item }}
+      args:
+        chdir: "{{ playbook_dir }}/ca_tls/master"
       loop:
         - kube-controller-manager
         - kube-scheduler
-        - admin
+        - service-account
+
+    - name: Generate kubeconfig for masters components
+      include_tasks: k8s_components_kubeconfigs/generate_master_components_kubeconfigs.yaml
+      loop:
+        - kube-controller-manager
+        - kube-scheduler
+      loop_control:
+        loop_var: component_name
+
+    - name: Generate admin kubeconfig
+      import_tasks: k8s_components_kubeconfigs/prepare_admin_kubeconfig.yaml
 
 - hosts: master-nodes
   name: Setup master nodes
@@ -63,8 +80,10 @@
       with_items:
         - { src: './ca_tls/ca.pem' }
         - { src: './ca_tls/ca-key.pem' }
-        - { src: './ca_tls/kubernetes-client.pem' } #?
-        - { src: './ca_tls/kubernetes-client-key.pem' }
+        - { src: './ca_tls/master/kubernetes.pem' }
+        - { src: './ca_tls/master/kubernetes-key.pem' }
+        - { src: './ca_tls/master/service-account.pem' }
+        - { src: './ca_tls/master/service-account-key.pem' }
         - { src: 'k8s_components_kubeconfigs/kube-controller-manager.kubeconfig'}
         - { src: 'k8s_components_kubeconfigs/kube-scheduler.kubeconfig'}
         - { src: 'k8s_components_kubeconfigs/admin.kubeconfig'}
@@ -112,8 +131,8 @@
         remote_src: yes
       with_items:
         - { src: "{{ base_user_home.stdout }}/ca.pem" }
-        - { src: "{{ base_user_home.stdout }}/kubernetes-client.pem" }
-        - { src: "{{ base_user_home.stdout }}/kubernetes-client-key.pem" }
+        - { src: "{{ base_user_home.stdout }}/kubernetes.pem" }
+        - { src: "{{ base_user_home.stdout }}/kubernetes-key.pem" }
       tags:
         - etcd
 
@@ -256,9 +275,11 @@
       loop:
         - ca.pem
         - ca-key.pem
-        - kubernetes-client-key.pem
-        - kubernetes-client.pem
+        - kubernetes-key.pem
+        - kubernetes.pem
         - encryption-config.yaml
+        - service-account.pem
+        - service-account-key.pem
       tags:
         - control-plane
 
@@ -336,6 +357,17 @@
       tags:
         - start_components
 
+    - name: Restart control plane services
+      become: true
+      systemd:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - kube-apiserver
+        - kube-controller-manager
+        - kube-scheduler
+      tags: [ 'restart_components', 'never' ]
+
 - hosts: localhost
   gather_facts: no
   tasks:
@@ -343,7 +375,7 @@
       set_fact:
         master_public_ips_list: "{{ master_ips.split(',') }}"
       tags:
-        - test
+        - validate-health
 
     - name: Validate api server(s) health
       uri:
@@ -354,7 +386,7 @@
       delay: 5
       loop: "{{ master_public_ips_list }}"
       tags:
-        - test
+        - validate-health
 
     - name: Verify api server access via frontend LB
       uri:
@@ -363,6 +395,19 @@
         validate_certs: no
       retries: 3
       delay: 5
+      tags:
+        - validate-health
+
+- hosts: master-nodes[0]
+  gather_facts: no
+  tasks:
+    - name: Create apiserver to kubelet cluster role
+      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role.yaml
+      tags:
+        - test
+
+    - name: Create apiserver to kubelet cluster role binding
+      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role-binding.yaml
       tags:
         - test
 

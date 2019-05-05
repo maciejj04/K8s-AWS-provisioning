@@ -1,8 +1,5 @@
 K8S_PUBLIC_HOST := $(shell aws elbv2 describe-load-balancers --name "mj-dev-k8s-master-frontend-lb" --query "LoadBalancers[].DNSName" --output=text)
-MASTER_IPS=18.130.204.147,35.178.184.251
-
-install-micro-cluster:
-	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem -i inventory.yaml install-k8s-cluster.yaml -e cluster_size=1mc-1mc -e cluster_size=1mc-1mc -e ansible_python_interpreter=/usr/bin/python3 # -vvvv
+MASTER_IPS=52.56.237.239,18.130.244.4
 
 setup-masters:
 	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-master-nodes.yaml -i inventory.yaml \
@@ -28,14 +25,15 @@ setup-control-plane:
 
 setup-workers:
 	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-worker-nodes.yaml -i inventory.yaml \
-	    -e ansible_python_interpreter=/usr/bin/python3
+	    -e ansible_python_interpreter=/usr/bin/python3 \
+	    -e masters_frontend_lb=$(K8S_PUBLIC_HOST)
 
 setup-workers-test:
 	ansible-playbook --private-key=/home/maciejj/Dokumenty/Clusters/Kubernetes/aws/secrets/k8s-operations.pem setup-worker-nodes.yaml -i inventory.yaml \
-	    -e ansible_python_interpreter=/usr/bin/python3 --tags "test,mock"
-
+	    -e ansible_python_interpreter=/usr/bin/python3 --tags "test,mock" \
+	    -e masters_frontend_lb=$(K8S_PUBLIC_HOST)
 
 setup_kubectl:
-	ansible-playbook setup-local-kubectl.yaml -e k8s_frontend_dns=$(K8S_PUBLIC_HOST)
+	ansible-playbook helpers/setup-local-kubectl.yaml -e k8s_frontend_dns=$(K8S_PUBLIC_HOST)
 
 build-from-scratch: provision-ca setup-masters setup-workers
