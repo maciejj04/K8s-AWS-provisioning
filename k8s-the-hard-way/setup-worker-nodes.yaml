@@ -6,8 +6,6 @@
       loop:
         - vars/commons.yaml
         - vars/worker.yaml
-      tags:
-        - test
 
 #    - name: MOCKING!
 #      include_vars:
@@ -230,6 +228,8 @@
       tags:
         - start_components
 
+      #TODO: validate node components.
+
     - name: Restart worker components
       become: true
       systemd:
@@ -240,9 +240,16 @@
         - kube-proxy
       tags: [ 'restart_components', 'never' ]
 
-#    - name: Provision pod network routes
-#      when: network_plugin is defined and network_plugin == "cni"
+    - name: Get aws instance id
+      uri:
+        url: http://169.254.169.254/latest/meta-data/instance-id
+        return_content: yes
+      register: instance_id_res
 
+    - set_fact:
+        instance_id: "{{ instance_id_res.content | trim }}"
 
-
-      #TODO: validate ndoe components.
+    - name: Provision pod network routes
+      when: (network_plugin is defined) and (network_plugin == 'cni')
+      command: aws ec2 create-route --route-table-id {{ route_table_id }} --destination-cidr-block {{ node_pod_cidr }} --instance-id {{ instance_id }}
+      delegate_to: localhost

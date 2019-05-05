@@ -13,5 +13,8 @@ default_async_poll: 10
 
 clusterDNS: "10.32.0.1"
 
+# ==========!!===========  To be removed when infra setup will be fully automated
+route_table_id: rtb-02db32d278026b057
+
 # ==========!!===========  Changed each time stack changes ===============!!===============
 masters_frontend_lb: ''
