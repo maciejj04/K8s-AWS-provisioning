@@ -16,6 +16,7 @@ Resources:
       InstanceType: 't2.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
+      SourceDestCheck: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
           PrivateIpAddress: '10.0.1.5'
@@ -50,6 +51,7 @@ Resources:
       InstanceType: 't2.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
+      SourceDestCheck: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
           PrivateIpAddress: '10.0.1.6'
