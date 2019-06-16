@@ -11,7 +11,7 @@ Resources:
           Ebs:
             VolumeSize: 15 # in GB
       DisableApiTermination: false # this is the default
-      ImageId: 'ami-0b0a60c0a2bd40612'
+      ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
       InstanceType: 't2.micro'
       KeyName: 'k8s-operations'
@@ -25,6 +25,11 @@ Resources:
           GroupSet:
             - 'sg-074c143d0f082afe6' # k8s-worker-internal (worker)
             - 'sg-0563033eb08ea547e' # k8s-worker-external (worker)
+      UserData:
+        Fn::Base64: !Sub |
+           #!/bin/bash
+           sudo modprobe br_netfilter
+           sudo swapoff -a # TODO: double check that
       Tags:
         - Key: node-type
           Value: compute
@@ -34,26 +39,31 @@ Resources:
   K8sWorker2:
     Type: AWS::EC2::Instance
     Properties:
-      AvailabilityZone: 'eu-west-2a' # TODO: extract to vars with appropriate subnet (SubnetId)
+      AvailabilityZone: 'eu-west-2b' # TODO: extract to vars with appropriate subnet (SubnetId)
       BlockDeviceMappings:
         - DeviceName: '/dev/sda1'
           Ebs:
             VolumeSize: 15 # in GB
       DisableApiTermination: false # this is the default
-      ImageId: 'ami-0b0a60c0a2bd40612'
+      ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
       InstanceType: 't2.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
       NetworkInterfaces:
         - AssociatePublicIpAddress: true
-          PrivateIpAddress: '10.0.0.5'
-          SubnetId: 'subnet-0525e7ef9499d1a5b' # TODO: extract to vars with appropriate AvailabilityZone
+          PrivateIpAddress: '10.0.1.6'
+          SubnetId: 'subnet-0adff0a2cc48f0f33' # TODO: extract to vars with appropriate AvailabilityZone
           DeviceIndex: '0'
           Description: 'Primary network interface'
           GroupSet:
             - 'sg-074c143d0f082afe6' # k8s-worker-internal (worker)
             - 'sg-0563033eb08ea547e' # k8s-worker-external (worker)
+      UserData:
+        Fn::Base64: !Sub |
+           #!/bin/bash
+           sudo modprobe br_netfilter
+           sudo swapoff -a
       Tags:
         - Key: node-type
           Value: compute

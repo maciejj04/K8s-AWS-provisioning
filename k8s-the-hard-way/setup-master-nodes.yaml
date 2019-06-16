@@ -73,6 +73,10 @@
       tags:
         - always
 
+    - name: Add workers to hosts
+      become: true
+      shell: "echo \"10.0.1.5 ip-10-0-1-5\n10.0.1.6 ip-10-0-1-6\" >> /etc/hosts"
+
     - name: Copy certs, kubeconfigs and encryption config to master nodes
       copy:
         src: "{{ item.src }}"
@@ -384,6 +388,8 @@
         validate_certs: no
       retries: 20
       delay: 5
+      register: healthcheck_status
+      until: healthcheck_status.status == 200
       loop: "{{ master_public_ips_list }}"
       tags:
         - validate-health
@@ -395,6 +401,8 @@
         validate_certs: no
       retries: 3
       delay: 5
+      register: healthcheck_status
+      until: healthcheck_status.status == 200
       tags:
         - validate-health
 

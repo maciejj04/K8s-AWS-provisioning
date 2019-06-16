@@ -2,19 +2,23 @@ owner: "Maciej Jozefczyk"
 cluster_name: mj-k8s
 
 kubectl_download_url: "https://storage.googleapis.com/kubernetes-release/release/v1.13.4/bin/linux/amd64/kubectl"
-cluster_cidr: 10.200.0.0/16
+cluster_cidr: 10.200.0.0/16 #.24?
 service_cluster_ip_range: 10.32.0.0/24
 masters_internal_ips: 10.0.0.4,10.0.1.4
-workers_internal_ips: 10.0.0.5,10.0.1.5
+workers_internal_ips: 10.0.1.5,10.0.1.6
 network_plugin: cni
 
 default_async_timeout: 120
 default_async_poll: 10
 
-clusterDNS: "10.32.0.1"
+clusterDNS: "10.32.0.10"
 
 # ==========!!===========  To be removed when infra setup will be fully automated
 route_table_id: rtb-02db32d278026b057
 
 # ==========!!===========  Changed each time stack changes ===============!!===============
 masters_frontend_lb: ''
+
+
+# ======================== Ansible specific ========================
+ansible_ssh_common_args: '-o StrictHostKeyChecking=no' # TODO: Test it!
