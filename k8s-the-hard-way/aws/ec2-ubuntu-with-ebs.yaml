@@ -14,7 +14,7 @@ Resources:
       DisableApiTermination: false # this is the default
       ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
-      InstanceType: 't2.micro'
+      InstanceType: 't3.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
       SourceDestCheck: false
@@ -49,7 +49,7 @@ Resources:
       DisableApiTermination: false # this is the default
       ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
-      InstanceType: 't2.micro'
+      InstanceType: 't3.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
       SourceDestCheck: false

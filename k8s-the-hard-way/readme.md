@@ -40,7 +40,7 @@ kubectl expose deployment nginx --port 80 --type NodePort
 
 `10.32`
 
-`ip route get 4.2.2.1`
+`ip route get 4.2.2.1` - get network interface to which given ip would be routed
 
 #### Containers
 

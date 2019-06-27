@@ -13,7 +13,7 @@ Resources:
       DisableApiTermination: false # this is the default
       ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
-      InstanceType: 't2.micro'
+      InstanceType: 't3.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
       SourceDestCheck: false
@@ -48,7 +48,7 @@ Resources:
       DisableApiTermination: false # this is the default
       ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
       InstanceInitiatedShutdownBehavior: 'stop'
-      InstanceType: 't2.micro'
+      InstanceType: 't3.micro'
       KeyName: 'k8s-operations'
       Monitoring: false
       SourceDestCheck: false
@@ -71,3 +71,41 @@ Resources:
           Value: compute
         - Key: Name
           Value: k8s-worker-2
+
+  K8sWorker3Infra:
+    Type: AWS::EC2::Instance
+    Properties:
+      AvailabilityZone: 'eu-west-2b' # TODO: extract to vars with appropriate subnet (SubnetId)
+      BlockDeviceMappings:
+        - DeviceName: '/dev/sda1'
+          Ebs:
+            VolumeSize: 15 # in GB
+#        - DeviceName: '/data' # can not use /data, https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/device_naming.html
+#          Ebs:
+#            VolumeSize: 5 # in GB
+      DisableApiTermination: false # this is the default
+      ImageId: 'ami-0f4c8d70e56e5eb4c' #ami-0b0a60c0a2bd40612 - Ubuntu 18.04
+      InstanceInitiatedShutdownBehavior: 'stop'
+      InstanceType: 't3.medium'
+      KeyName: 'k8s-operations'
+      Monitoring: false
+      SourceDestCheck: false
+      NetworkInterfaces:
+        - AssociatePublicIpAddress: true
+          PrivateIpAddress: '10.0.1.7'
+          SubnetId: 'subnet-0adff0a2cc48f0f33' # TODO: extract to vars with appropriate AvailabilityZone
+          DeviceIndex: '0'
+          Description: 'Primary network interface'
+          GroupSet:
+            - 'sg-074c143d0f082afe6' # k8s-worker-internal (worker)
+            - 'sg-0563033eb08ea547e' # k8s-worker-external (worker)
+      UserData:
+        Fn::Base64: !Sub |
+           #!/bin/bash
+           sudo modprobe br_netfilter
+           sudo swapoff -a
+      Tags:
+        - Key: node-type
+          Value: infra
+        - Key: Name
+          Value: k8s-worker-3-infra
