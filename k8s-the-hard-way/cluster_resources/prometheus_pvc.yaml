@@ -1,0 +1,22 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: unhinged-tortoise-prometheus-server
+  namespace: default
+  labels:
+    app: prometheus
+    chart: prometheus-8.11.4
+    component: server
+    heritage: Tiller
+    release: unhinged-tortoise
+#  finalizers:
+#  - kubernetes.io/pvc-protection
+spec:
+  storageClassName: generic
+  accessModes:
+  - ReadWriteOnce
+  resources:
+    requests:
+      storage: 8Gi
+  volumeMode: Filesystem

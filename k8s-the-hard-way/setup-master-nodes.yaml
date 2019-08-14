@@ -75,7 +75,7 @@
 
     - name: Add workers to hosts
       become: true
-      shell: "echo \"10.0.1.5 ip-10-0-1-5\n10.0.1.6 ip-10-0-1-6\" >> /etc/hosts"
+      shell: "echo \"10.0.1.5 ip-10-0-1-5\n10.0.1.6 ip-10-0-1-6\n10.0.1.7 ip-10-0-1-7\" >> /etc/hosts"
 
     - name: Copy certs, kubeconfigs and encryption config to master nodes
       copy:
@@ -405,19 +405,6 @@
       until: healthcheck_status.status == 200
       tags:
         - validate-health
-
-- hosts: master-nodes[0]
-  gather_facts: no
-  tasks:
-    - name: Create apiserver to kubelet cluster role
-      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role.yaml
-      tags:
-        - test
-
-    - name: Create apiserver to kubelet cluster role binding
-      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role-binding.yaml
-      tags:
-        - test
 
 # TODO:
 #    - name: kubectl get componentstatuses

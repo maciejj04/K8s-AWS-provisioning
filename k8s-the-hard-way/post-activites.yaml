@@ -1,0 +1,28 @@
+- hosts: localhost
+  name: Post activities
+  gather_facts: no
+  tasks:
+    - name: Set infra nodes label
+      command: kubectl taint nodes ip-10-0-1-7 infra=true:NoSchedule
+#      command: kubectl label nodes ip-10-0-1-7 infra=true --overwrite=true
+
+    - name: Create apiserver to kubelet cluster role
+      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role.yaml
+
+    - name: Create apiserver to kubelet cluster role binding
+      command: kubectl apply --kubeconfig {{ playbook_dir }}/k8s_components_kubeconfigs/admin.kubeconfig -f {{ playbook_dir }}/k8s_components_configuration/kubeapi-to-kubelet-cluster-role-binding.yaml
+
+    - name: Deploy dns
+      command: kubectl apply -f helpers/kube-dns.yaml
+
+    - name: Deploy dashboard
+      command: kubectl apply -f helpers/kubernetes-dashboard.yaml
+
+    - name: Use tiller sa
+      shell: |
+        kubectl create serviceaccount --namespace kube-system tiller
+        kubectl create clusterrolebinding tiller-cluster-rule --clusterrole=cluster-admin --serviceaccount=kube-system:tiller
+        kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"template":{"spec":{"serviceAccount":"tiller"}}}}'
+
+#    - name: Deploy prometheus
+#      command: TODO

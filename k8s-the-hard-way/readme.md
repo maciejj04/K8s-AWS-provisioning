@@ -1,3 +1,10 @@
+# Procedure for setup with varying number of nodes
+
+- Setup internal ips in vars/_commons.yaml_ variables file.
+
+
+- run post-activities.yaml ansible-playbook
+
 Example usage:
 
 `
@@ -52,6 +59,14 @@ kubectl expose deployment nginx --port 80 --type NodePort
 
 ##### Prometheus
 
+###### Deployment
+
+1. helm init - to deploy _tiller_.
+    - +Lack of permissions section
+2. helm install prometheus (TODO exact command)
+3. Delete alertmanager(?)
+4. Change PVC to hostPath (PV issue)
+
 ###### PV issue
 
 Modify prometheus and alertmanager deployments to use hostPath(may be related to swap problem?)
@@ -67,3 +82,9 @@ kubectl patch deploy --namespace kube-system tiller-deploy -p '{"spec":{"templat
 #### Fake workload
 
 `kubectl run spaster --image=spaster/alpine-sleep`
+
+#### cAdvisor
+
+https://github.com/google/cadvisor/tree/master/deploy/kubernetes
+
+`kustomize build deploy/kubernetes/base | kubectl apply -f -`

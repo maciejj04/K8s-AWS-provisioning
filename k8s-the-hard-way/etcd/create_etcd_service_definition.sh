@@ -18,14 +18,14 @@ done
 function mapIpsToArgFormat() {
     IFS=',' read -r -a hosts <<< "$1"
 
+    argLine+="etcd${INDEX}=https://${INTERNAL_IP}:2380"
+
     count=${#hosts[@]}
     if [ ${count} =  "0" ]; then
         echo "No peer hosts given"
         return
     fi
     echo "Found ${count} hosts"
-
-    argLine+="etcd${INDEX}=https://${INTERNAL_IP}:2380"
 
     for (( i=0, idx=0; i<${count}; i++, idx++ ));
     do
